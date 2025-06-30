@@ -1,0 +1,33 @@
+{
+	"name": "graphcraft",
+	"version": "1.0.0",
+	"description": "",
+	"main": "server.js",
+	"bin": "server.js",
+	"scripts": {
+		"start": "node server.js",
+		"build": "pkg . --out-path dist/"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"dependencies": {
+		"ejs": "^3.1.10",
+		"express": "^5.1.0",
+		"express-session": "^1.18.1",
+		"multer": "^2.0.1"
+	},
+	"pkg": {
+		"scripts": [
+			"server.js"
+		],
+		"assets": [
+			"submissions.json",
+			"views/**/*",
+			"public/**/*",
+			"problems/**/*",
+			"submissions/**/*"
+		]
+	}
+}

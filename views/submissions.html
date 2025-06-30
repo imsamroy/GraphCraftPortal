@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title><%= title %></title>
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+	<body>
+		<div class="header-container">
+			<h1>Submissions</h1>
+			<div class="test-status">
+				<span class="status-indicator complete"></span>
+				<span>Test Complete</span>
+			</div>
+		</div>
+
+		<div class="info-box">
+			<p>Session started: <span id="sessionStartTime"></span></p>
+			<p>
+				Total images: <%= totalImages %>, Submitted: <%=
+				submissions.length %>
+			</p>
+			<% if (submissions.length < totalImages) { %>
+			<p class="warning">
+				Note: Only <%= submissions.length %> of <%= totalImages %>
+				images were submitted.
+			</p>
+			<% } %>
+		</div>
+
+		<% if (submissions.length === 0) { %>
+		<p class="no-submissions">No submissions were made in this session.</p>
+		<% } else { %>
+		<table class="submissions-table">
+			<thead>
+				<tr>
+					<th>Image Filename</th>
+					<th>Uploaded File</th>
+					<th>Submission Time</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% submissions.forEach(function(submission) { %>
+				<tr>
+					<td><%= submission.imageFilename %></td>
+					<td>
+						<% if (submission.uploadedFilename) { %>
+						<a
+							href="/submissions/<%= encodeURIComponent(submission.uploadedFilename) %>"
+							download
+						>
+							<%= submission.uploadedFilename %>
+						</a>
+						<% } else { %> No file uploaded <% } %>
+					</td>
+					<td>
+						<%= new Date(submission.timestamp).toLocaleString() %>
+					</td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+		<% } %>
+
+		<div class="session-complete">
+			<h2>Test Session Complete</h2>
+			<p>All submissions have been recorded.</p>
+		</div>
+
+		<script>
+			// Set session start time
+			document.getElementById("sessionStartTime").textContent =
+				new Date().toLocaleString();
+		</script>
+	</body>
+</html>
