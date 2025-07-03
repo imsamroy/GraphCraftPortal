@@ -26,7 +26,8 @@
 			"submissions.json",
 			"views/**/*",
 			"public/**/*",
-			"problems/**/*",
+			"problems-round-1/**/*",
+			"problems-round-2/**/*",
 			"submissions/**/*"
 		]
 	}

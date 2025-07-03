@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title><%= title %></title>
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+	<body>
+		<div class="header-container">
+			<h1>GraphCraft <%= round %></h1>
+			<div class="test-status">
+				<span class="status-indicator active"></span>
+				<span>Test in progress</span>
+
+				<div class="vl"></div>
+
+				<!-- Add this after the progress bar -->
+				<div class="timer-container">
+					<span>Time Remaining: <span id="timer">45:00</span></span>
+				</div>
+
+				<!-- Add this hidden element to store initial time -->
+				<div
+					id="initialRemainingTime"
+					data-remaining="<%= remainingTime %>"
+					style="display: none"
+				></div>
+				<span id="problemDir" visibility="hidden"
+					><%= problemDir %></span
+				>
+			</div>
+		</div>
+
+		<div class="server-status">
+			<span>Submitting one problem will reveal more!</span>
+		</div>
+
+		<% if (totalCount === 0) { %>
+		<div class="completion-container">
+			<p class="no-images">
+				No PNG images found in the problems directory.
+			</p>
+		</div>
+		<% } else { %>
+		<div class="image-container" id="imageContainer">
+			<% images.forEach(function(file) { %>
+			<div class="image-card" data-filename="<%= file %>">
+				<a href="/download/<%= encodeURIComponent(file) %>" download>
+					<img
+						src="/<%= problemDir %>/<%= encodeURIComponent(file) %>"
+						alt="<%= file %>"
+						class="clickable-image"
+						title="Click to Download"
+					/>
+				</a>
+				<div class="image-name"><%= file %></div>
+
+				<div class="file-upload-container">
+					<input
+						type="file"
+						class="file-input"
+						id="file-<%= file %>"
+						accept="*/*"
+					/>
+					<label for="file-<%= file %>" class="upload-btn"
+						>Upload File</label
+					>
+					<span class="file-name" id="file-name-<%= file %>"
+						>No file selected</span
+					>
+				</div>
+
+				<button class="submit-btn" data-image="<%= file %>" disabled>
+					Submit
+				</button>
+			</div>
+			<% }); %>
+		</div>
+		<% } %>
+
+		<!-- Final Submit Button -->
+		<div class="final-submit-container">
+			<button id="finalSubmitBtn" class="final-submit-btn">
+				Final Submit
+			</button>
+		</div>
+
+		<!-- Confirmation Modal -->
+		<div id="confirmationModal" class="modal">
+			<div class="modal-content">
+				<h2>Confirm Final Submission</h2>
+				<p id="confirmationMessage">Are you sure you want to submit?</p>
+				<div class="modal-buttons">
+					<button id="cancelBtn" class="modal-btn cancel-btn">
+						Cancel
+					</button>
+					<button id="confirmBtn" class="modal-btn confirm-btn">
+						Confirm
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<script src="/js/test.js"></script>
+	</body>
+</html>

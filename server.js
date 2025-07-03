@@ -6,45 +6,40 @@ const multer = require("multer");
 
 const app = express();
 const PORT = 3000;
-const PROBLEMS_DIR = path.join(process.cwd(), "problems");
-const SUBMISSIONS_DIR = path.join(process.cwd(), "submissions");
-const SUBMISSIONS_JSON = path.join(process.cwd(), "submissions.json");
+const PROBLEMS_DIR_1 = path.join(process.cwd(), "problems-round-1");
+const PROBLEMS_DIR_2 = path.join(process.cwd(), "problems-round-2");
+const SUBMISSIONS_DIR_1 = path.join(process.cwd(), "submissions-round-1");
+const SUBMISSIONS_DIR_2 = path.join(process.cwd(), "submissions-round-2");
+
+let TOTAL_TEAMS = 0;
 
 // Modify the initialization code:
 function initializeApp() {
 	// Create directories if they don't exist
-	[PROBLEMS_DIR, SUBMISSIONS_DIR].forEach((dir) => {
+	[
+		PROBLEMS_DIR_1,
+		PROBLEMS_DIR_2,
+		SUBMISSIONS_DIR_1,
+		SUBMISSIONS_DIR_2,
+	].forEach((dir) => {
 		if (!fs.existsSync(dir)) {
 			fs.mkdirSync(dir, { recursive: true });
 		}
 	});
+}
 
-	// Initialize submissions.json if it doesn't exist
-	if (!fs.existsSync(SUBMISSIONS_JSON)) {
-		fs.writeFileSync(SUBMISSIONS_JSON, JSON.stringify([], null, 2));
-		console.log("Created submissions.json");
-	}
+function log(s) {
+	let time = new Date(Date.now()).toLocaleTimeString();
+	console.log("[" + time + "]: " + s);
 }
 
 initializeApp();
 
-// Create directories if they don't exist
-// [PROBLEMS_DIR, SUBMISSIONS_DIR].forEach((dir) => {
-// 	if (!fs.existsSync(dir)) {
-// 		fs.mkdirSync(dir);
-// 		console.log(`Created directory at ${dir}`);
-// 	}
-// });
-
-// FLUSH submissions.json on server start
-console.log("Flushing submissions.json...");
-fs.writeFileSync(SUBMISSIONS_JSON, JSON.stringify([], null, 2));
-console.log("submissions.json reset to empty array");
-
 // Configure multer for file uploads
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
-		cb(null, SUBMISSIONS_DIR);
+		const finalDir = req.session.teamSubmissionsDir;
+		cb(null, finalDir);
 	},
 	filename: (req, file, cb) => {
 		const imageFilename = req.body.image;
@@ -57,7 +52,7 @@ const storage = multer.diskStorage({
 			path.extname(imageFilename),
 		);
 		const ext = path.extname(file.originalname);
-		const newFilename = `${baseName}${ext}`;
+		const newFilename = `${req.session.teamName}-${baseName}${ext}`;
 
 		cb(null, newFilename);
 	},
@@ -67,8 +62,10 @@ const upload = multer({ storage: storage });
 
 // Set up static files - FIRST: so they don't go through session and other middlewares
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/problems", express.static(PROBLEMS_DIR));
-app.use("/submissions", express.static(SUBMISSIONS_DIR)); // Serve submitted files
+app.use("/problems-round-1", express.static(PROBLEMS_DIR_1));
+app.use("/problems-round-2", express.static(PROBLEMS_DIR_2));
+app.use("/submissions-round-1", express.static(SUBMISSIONS_DIR_1));
+app.use("/submissions-round-2", express.static(SUBMISSIONS_DIR_2));
 
 // Session configuration
 app.use(
@@ -84,35 +81,98 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Timer middleware - MUST come after session middleware
-app.use((req, res, next) => {
-	if (req.session.testStarted && !req.session.finalSubmit) {
-		const now = Date.now();
+// Set up view engine
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "html");
+app.engine("html", require("ejs").renderFile);
 
-		// Initialize timer if starting test
-		if (!req.session.startTime) {
-			req.session.startTime = now;
-			req.session.timeLimit = 45 * 60 * 1000; // 45 minutes in ms
-		}
+app.listen(PORT, () => {
+	console.log(`Server running on http://localhost:${PORT}`);
+});
 
-		// Calculate remaining time
-		const elapsed = now - req.session.startTime;
-		req.session.remainingTime = Math.max(
-			0,
-			req.session.timeLimit - elapsed,
-		);
+function redirectToCurrentState(req, res) {
+	req.session.save((err) => {
+		if (err) console.error("Session save error:", err);
+		return res.redirect(req.session.currentState);
+	});
+}
 
-		// Auto-finalize if time expired
-		if (req.session.remainingTime <= 0) {
-			req.session.finalSubmit = true;
-			// Save session and redirect to submissions
-			return req.session.save((err) => {
-				if (err) console.error("Session save error:", err);
-				return res.redirect("/submissions");
-			});
-		}
+app.get("/login", (req, res) => {
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/login"
+	)
+		return redirectToCurrentState(req, res);
+
+	req.session.currentState = "/login";
+
+	res.render("login", {
+		title: "Login",
+	});
+});
+
+function makeFolderWithTeamName(teamName) {
+	dir = path.join(SUBMISSIONS_DIR_1, teamName);
+
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
 	}
-	next();
+	log("Created submissions folder for team " + teamName + " for round 1");
+
+	json_dir = path.join(dir, "submissions.json");
+
+	fs.writeFileSync(json_dir, JSON.stringify([], null, 2));
+	log("Created submissions.json for team " + teamName + " for round 1");
+
+	return dir;
+}
+
+function makeFolderWithTeamName2(teamName) {
+	dir = path.join(SUBMISSIONS_DIR_2, teamName);
+
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
+	log("Created submissions folder for team " + teamName + " for round 2");
+
+	json_dir = path.join(dir, "submissions.json");
+
+	fs.writeFileSync(json_dir, JSON.stringify([], null, 2));
+	log("Created submissions.json for team " + teamName + " for round 2");
+
+	return dir;
+}
+
+app.post("/login", upload.none(), (req, res) => {
+	teamName = req.body.name;
+
+	req.session.teamSubmissionsDir = makeFolderWithTeamName(teamName);
+	req.session.teamSubmissionsJSONDir = path.join(
+		req.session.teamSubmissionsDir,
+		"submissions.json",
+	);
+	req.session.teamName = teamName;
+
+	TOTAL_TEAMS++;
+
+	req.session.currentState = "/start";
+	req.session.currentRound = 0;
+
+	log("Team " + req.session.teamName + " logged in.");
+
+	return redirectToCurrentState(req, res);
+});
+
+app.get("/start", (req, res) => {
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/start"
+	)
+		return redirectToCurrentState(req, res);
+
+	res.render("start", {
+		title: "Start",
+	});
 });
 
 // Function to shuffle array (Fisher-Yates algorithm)
@@ -125,55 +185,14 @@ function shuffleArray(array) {
 	return shuffled;
 }
 
-// Middleware to handle state-based redirects
-app.use((req, res, next) => {
-	// If test hasn't started, only allow access to start page
-	// if (
-	// 	!req.session.testStarted &&
-	// 	req.path !== "/start" &&
-	// 	req.path !== "/css/style.css"
-	// ) {
-	// 	return res.redirect("/start");
-	// }
-
-	// If test has started but not finalized, redirect away from start page
-	if (
-		req.session.testStarted &&
-		!req.session.finalSubmit &&
-		req.path === "/start"
-	) {
-		return res.redirect("/");
-	}
-
-	// If test is finalized, redirect to submissions page
-	if (
-		req.session.finalSubmit &&
-		req.path !== "/submissions" &&
-		!req.path.startsWith("/submissions/") &&
-		req.path !== "/"
-	) {
-		return res.redirect("/submissions");
-	}
-
-	next();
-});
-
-// Set up view engine
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "html");
-app.engine("html", require("ejs").renderFile);
-
-// Start page route
-app.get("/start", (req, res) => {
-	res.render("start", {
-		title: "Start Test",
-	});
-});
-
-// Start test route
 app.post("/start-test", (req, res) => {
+	req.session.currentRound++;
+
+	const problems_dir =
+		req.session.currentRound == 1 ? PROBLEMS_DIR_1 : PROBLEMS_DIR_2;
+
 	// Initialize all session variables
-	const files = fs.readdirSync(PROBLEMS_DIR);
+	const files = fs.readdirSync(problems_dir);
 	const pngFiles = files.filter((file) =>
 		file.toLowerCase().endsWith(".png"),
 	);
@@ -186,47 +205,43 @@ app.post("/start-test", (req, res) => {
 	req.session.displayedImages = req.session.availableImages.slice(0, 4);
 	req.session.finalSubmit = false;
 
-	// Save session before redirecting
-	req.session.save((err) => {
-		if (err) console.error("Session save error:", err);
-		res.redirect("/");
-	});
+	req.session.currentState = "/test";
+
+	log("Team " + req.session.teamName + " started the test");
+	log(
+		"Team " +
+			req.session.teamName +
+			" is currently giving round " +
+			req.session.currentRound,
+	);
+
+	return redirectToCurrentState(req, res);
 });
 
-// Main route
-app.get("/", (req, res) => {
-	// Initialize session if needed
-	if (!req.session.availableImages && req.session.testStarted) {
-		const files = fs.readdirSync(PROBLEMS_DIR);
-		const pngFiles = files.filter((file) =>
-			file.toLowerCase().endsWith(".png"),
-		);
-		req.session.allImages = pngFiles;
-		req.session.availableImages = shuffleArray(pngFiles);
-		req.session.displayedImages = req.session.availableImages.slice(0, 4);
-		req.session.finalSubmit = false;
-	}
+app.get("/test", (req, res) => {
+	if (req.session.currentState != null && req.session.currentState != "/test")
+		return redirectToCurrentState(req, res);
 
-	// Redirect to submissions if finalized
-	if (req.session.finalSubmit) {
-		return res.redirect("/submissions");
-	}
-
-	res.render("index", {
-		title: "Image Submission",
+	res.render("test", {
+		title: "GraphCraft Round " + req.session.currentRound,
+		round: req.session.currentRound == 1 ? "Round 1" : "Round 2",
 		images: req.session.displayedImages || [],
 		totalCount: req.session.allImages ? req.session.allImages.length : 0,
 		remainingCount: req.session.availableImages
 			? req.session.availableImages.length
 			: 0,
 		remainingTime: req.session.remainingTime || 0, // Add timer value
+		problemDir:
+			req.session.currentRound == 1
+				? "problems-round-1"
+				: "problems-round-2",
 	});
 });
 
 // Helper function to read submissions safely
-function readSubmissions() {
+function readSubmissions(json_dir) {
 	try {
-		const data = fs.readFileSync(SUBMISSIONS_JSON, "utf8");
+		const data = fs.readFileSync(json_dir, "utf8");
 		if (!data.trim()) return [];
 		return JSON.parse(data);
 	} catch (error) {
@@ -236,12 +251,9 @@ function readSubmissions() {
 }
 
 // Helper function to write submissions safely
-function writeSubmissions(submissions) {
+function writeSubmissions(json_dir, submissions) {
 	try {
-		fs.writeFileSync(
-			SUBMISSIONS_JSON,
-			JSON.stringify(submissions, null, 2),
-		);
+		fs.writeFileSync(json_dir, JSON.stringify(submissions, null, 2));
 		return true;
 	} catch (error) {
 		console.error("Error writing submissions:", error);
@@ -266,9 +278,14 @@ app.post("/submit-image", upload.single("submission"), (req, res) => {
 		};
 
 		// Append to submissions.json
-		const submissions = readSubmissions();
+		const submissions = readSubmissions(req.session.teamSubmissionsJSONDir);
 		submissions.push(submissionData);
-		const writeSuccess = writeSubmissions(submissions);
+		const writeSuccess = writeSubmissions(
+			req.session.teamSubmissionsJSONDir,
+			submissions,
+		);
+
+		log("Team " + req.session.teamName + " submitted " + req.file.filename);
 
 		if (!writeSuccess) {
 			return res.status(500).json({ error: "Failed to save submission" });
@@ -309,53 +326,47 @@ app.post("/submit-image", upload.single("submission"), (req, res) => {
 
 // Final submit route
 app.post("/final-submit", (req, res) => {
-	req.session.finalSubmit = true;
-	// Save session before redirecting
-	req.session.save((err) => {
-		if (err) console.error("Session save error:", err);
-		res.redirect("/submissions");
+	req.session.currentState = "/prepare";
+
+	log(
+		"Team " +
+			req.session.teamName +
+			" has final submitted round " +
+			req.session.currentRound,
+	);
+
+	return redirectToCurrentState(req, res);
+});
+
+app.get("/prepare", (req, res) => {
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/prepare"
+	)
+		return redirectToCurrentState(req, res);
+
+	res.render("prepare", {
+		title: "Prepare",
 	});
 });
 
-// Route to view submissions
-app.get("/submissions", (req, res) => {
-	try {
-		const submissions = readSubmissions();
-		res.render("submissions", {
-			title: "Submissions Log",
-			submissions: submissions,
-			totalImages: req.session.allImages
-				? req.session.allImages.length
-				: 0,
-		});
-	} catch (error) {
-		console.error("Error reading submissions:", error);
-		res.status(500).send("Error reading submissions");
-	}
-});
-
-app.listen(PORT, () => {
-	console.log(`Server running on http://localhost:${PORT}`);
-	console.log(
-		`Place your PNG images in the 'problems' directory at ${PROBLEMS_DIR}`,
+app.post("/next-round", (req, res) => {
+	req.session.teamSubmissionsDir = makeFolderWithTeamName2(
+		req.session.teamName,
 	);
-	console.log(`Submissions saved to: ${SUBMISSIONS_DIR}`);
-	console.log(`Submissions log: ${SUBMISSIONS_JSON}`);
-	console.log(`Submissions.json flushed on startup`);
-});
+	req.session.teamSubmissionsJSONDir = path.join(
+		req.session.teamSubmissionsDir,
+		"submissions.json",
+	);
 
-app.get("/download/:filename", (req, res) => {
-	const filename = decodeURIComponent(req.params.filename); // Decode the filename
-	const filePath = path.join(PROBLEMS_DIR, filename);
+	req.session.currentState = "/start";
 
-	if (fs.existsSync(filePath)) {
-		res.download(filePath, filename, (err) => {
-			if (err) {
-				console.error("Download error:", err);
-				res.status(500).send("Error downloading file");
-			}
-		});
-	} else {
-		res.status(404).send("File not found");
-	}
+	log(
+		"Team " +
+			req.session.teamName +
+			" is going to start next round " +
+			req.session.currentRound,
+	);
+
+	return redirectToCurrentState(req, res);
 });
