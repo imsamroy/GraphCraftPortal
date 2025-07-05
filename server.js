@@ -10,8 +10,15 @@ const PROBLEMS_DIR_1 = path.join(process.cwd(), "problems-round-1");
 const PROBLEMS_DIR_2 = path.join(process.cwd(), "problems-round-2");
 const SUBMISSIONS_DIR_1 = path.join(process.cwd(), "submissions-round-1");
 const SUBMISSIONS_DIR_2 = path.join(process.cwd(), "submissions-round-2");
+const JUDGE_VIEW_DIR_1 = path.join(process.cwd(), "judge-view-round-1");
+const JUDGE_VIEW_DIR_2 = path.join(process.cwd(), "judge-view-round-2");
 
 let TOTAL_TEAMS = 0;
+let TEAM_LIST = [];
+let FREEZE_LOGIN = false;
+
+let CURRENT_ROUND = 0;
+let TEST_STATE = "RUNNING";
 
 // Modify the initialization code:
 function initializeApp() {
@@ -21,6 +28,8 @@ function initializeApp() {
 		PROBLEMS_DIR_2,
 		SUBMISSIONS_DIR_1,
 		SUBMISSIONS_DIR_2,
+		JUDGE_VIEW_DIR_1,
+		JUDGE_VIEW_DIR_2,
 	].forEach((dir) => {
 		if (!fs.existsSync(dir)) {
 			fs.mkdirSync(dir, { recursive: true });
@@ -66,6 +75,8 @@ app.use("/problems-round-1", express.static(PROBLEMS_DIR_1));
 app.use("/problems-round-2", express.static(PROBLEMS_DIR_2));
 app.use("/submissions-round-1", express.static(SUBMISSIONS_DIR_1));
 app.use("/submissions-round-2", express.static(SUBMISSIONS_DIR_2));
+app.use("/judge-view-round-1", express.static(JUDGE_VIEW_DIR_1));
+app.use("/judge-view-round-2", express.static(JUDGE_VIEW_DIR_2));
 
 // Session configuration
 app.use(
@@ -111,42 +122,64 @@ app.get("/login", (req, res) => {
 	});
 });
 
-function makeFolderWithTeamName(teamName) {
-	dir = path.join(SUBMISSIONS_DIR_1, teamName);
+function makeFolderWithTeamName(req, teamName) {
+	req.session.teamSubmissionsDir = path.join(SUBMISSIONS_DIR_1, teamName);
+	let dir = req.session.teamSubmissionsDir;
 
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, { recursive: true });
 	}
-	log("Created submissions folder for team " + teamName + " for round 1");
+	log(`Created submissions folder for team ${teamName} for round 1`);
 
 	json_dir = path.join(dir, "submissions.json");
 
 	fs.writeFileSync(json_dir, JSON.stringify([], null, 2));
-	log("Created submissions.json for team " + teamName + " for round 1");
+	log(`Created submissions.json for team ${teamName} for round 1`);
+
+	req.session.teamJudgingDir = path.join(JUDGE_VIEW_DIR_1, teamName);
+	dir = req.session.teamJudgingDir;
+
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
+	log(`Created judging folder for team ${teamName} for round 1`);
 
 	return dir;
 }
 
-function makeFolderWithTeamName2(teamName) {
-	dir = path.join(SUBMISSIONS_DIR_2, teamName);
+function makeFolderWithTeamName2(req, teamName) {
+	req.session.teamSubmissionsDir = path.join(SUBMISSIONS_DIR_2, teamName);
+	let dir = req.session.teamSubmissionsDir;
 
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, { recursive: true });
 	}
-	log("Created submissions folder for team " + teamName + " for round 2");
+	log(`Created submissions folder for team ${teamName} for round 2`);
 
 	json_dir = path.join(dir, "submissions.json");
 
 	fs.writeFileSync(json_dir, JSON.stringify([], null, 2));
-	log("Created submissions.json for team " + teamName + " for round 2");
+	log(`Created submissions.json for team ${teamName} for round 2`);
+
+	req.session.teamJudgingDir = path.join(JUDGE_VIEW_DIR_2, teamName);
+	dir = req.session.teamJudgingDir;
+
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
+	log(`Created judging folder for team ${teamName} for round 2`);
 
 	return dir;
 }
 
 app.post("/login", upload.none(), (req, res) => {
+	if (FREEZE_LOGIN) return res.redirect("/login");
+
 	teamName = req.body.name;
 
-	req.session.teamSubmissionsDir = makeFolderWithTeamName(teamName);
+	TEAM_LIST.push(teamName);
+
+	makeFolderWithTeamName(req, teamName);
 	req.session.teamSubmissionsJSONDir = path.join(
 		req.session.teamSubmissionsDir,
 		"submissions.json",
@@ -164,6 +197,10 @@ app.post("/login", upload.none(), (req, res) => {
 });
 
 app.get("/start", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/login";
+		return redirectToCurrentState(req, res);
+	}
 	if (
 		req.session.currentState != null &&
 		req.session.currentState != "/start"
@@ -186,6 +223,9 @@ function shuffleArray(array) {
 }
 
 app.post("/start-test", (req, res) => {
+	if (req.session.currentRound >= CURRENT_ROUND)
+		return redirectToCurrentState(req, res);
+
 	req.session.currentRound++;
 
 	const problems_dir =
@@ -207,18 +247,19 @@ app.post("/start-test", (req, res) => {
 
 	req.session.currentState = "/test";
 
-	log("Team " + req.session.teamName + " started the test");
+	log(`Team ${req.session.teamName} started the test`);
 	log(
-		"Team " +
-			req.session.teamName +
-			" is currently giving round " +
-			req.session.currentRound,
+		`Team ${req.session.teamName} is currently giving round ${req.session.currentRound}`,
 	);
 
 	return redirectToCurrentState(req, res);
 });
 
 app.get("/test", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/login";
+		return redirectToCurrentState(req, res);
+	}
 	if (req.session.currentState != null && req.session.currentState != "/test")
 		return redirectToCurrentState(req, res);
 
@@ -263,6 +304,10 @@ function writeSubmissions(json_dir, submissions) {
 
 // API to remove an image and handle file upload
 app.post("/submit-image", upload.single("submission"), (req, res) => {
+	if (TEST_STATE != "RUNNING") {
+		res.status(500).json({ error: "Test has ended" });
+	}
+
 	const imageToRemove = req.body.image;
 
 	if (!imageToRemove) {
@@ -285,7 +330,7 @@ app.post("/submit-image", upload.single("submission"), (req, res) => {
 			submissions,
 		);
 
-		log("Team " + req.session.teamName + " submitted " + req.file.filename);
+		log(`Team ${req.session.teamName} submitted ${req.file.filename}`);
 
 		if (!writeSuccess) {
 			return res.status(500).json({ error: "Failed to save submission" });
@@ -326,19 +371,30 @@ app.post("/submit-image", upload.single("submission"), (req, res) => {
 
 // Final submit route
 app.post("/final-submit", (req, res) => {
-	req.session.currentState = "/prepare";
+	if (req.session.currentRound == 1) {
+		req.session.currentState = "/prepare";
 
-	log(
-		"Team " +
-			req.session.teamName +
-			" has final submitted round " +
-			req.session.currentRound,
-	);
+		log(
+			`Team ${req.session.teamName} has final submitted round ${req.session.currentRound}`,
+		);
 
-	return redirectToCurrentState(req, res);
+		return redirectToCurrentState(req, res);
+	} else {
+		req.session.currentState = "/finish";
+
+		log(
+			`Team ${req.session.teamName} has final submitted round ${req.session.currentRound}`,
+		);
+
+		return redirectToCurrentState(req, res);
+	}
 });
 
 app.get("/prepare", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/login";
+		return redirectToCurrentState(req, res);
+	}
 	if (
 		req.session.currentState != null &&
 		req.session.currentState != "/prepare"
@@ -351,9 +407,8 @@ app.get("/prepare", (req, res) => {
 });
 
 app.post("/next-round", (req, res) => {
-	req.session.teamSubmissionsDir = makeFolderWithTeamName2(
-		req.session.teamName,
-	);
+	makeFolderWithTeamName2(req, req.session.teamName);
+
 	req.session.teamSubmissionsJSONDir = path.join(
 		req.session.teamSubmissionsDir,
 		"submissions.json",
@@ -362,11 +417,281 @@ app.post("/next-round", (req, res) => {
 	req.session.currentState = "/start";
 
 	log(
-		"Team " +
-			req.session.teamName +
-			" is going to start next round " +
-			req.session.currentRound,
+		`Team ${req.session.teamName} is going to start round ${req.session.currentRound}`,
 	);
 
 	return redirectToCurrentState(req, res);
+});
+
+app.get("/finish", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/login";
+		return redirectToCurrentState(req, res);
+	}
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/finish"
+	)
+		return redirectToCurrentState(req, res);
+
+	res.render("finish", {
+		title: "Finished",
+	});
+});
+
+app.get("/admin-login", (req, res) => {
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/admin-login"
+	)
+		return redirectToCurrentState(req, res);
+
+	res.render("admin-login", {
+		title: "Administrator Login",
+	});
+});
+
+app.post("/admin-login", upload.none(), (req, res) => {
+	password = req.body.pass;
+
+	if (password != "Rihnosaur") return redirectToCurrentState(req, res);
+
+	req.session.currentState = "/invigilation-start";
+	req.session.currentRound = 0;
+
+	log("Administrator logged in");
+
+	return redirectToCurrentState(req, res);
+});
+
+app.get("/invigilation-start", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/admin-login";
+		return redirectToCurrentState(req, res);
+	}
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/invigilation-start"
+	)
+		return redirectToCurrentState(req, res);
+
+	req.session.currentState = "/invigilation-start";
+
+	log("Administrator started the test");
+
+	res.render("invigilation-start", {
+		title: "Start",
+	});
+});
+
+app.post("/invigilation-start-test", (req, res) => {
+	CURRENT_ROUND++;
+	FREEZE_LOGIN = true;
+
+	req.session.currentState = "/invigilation";
+
+	log("Admin started round " + CURRENT_ROUND);
+
+	return redirectToCurrentState(req, res);
+});
+
+app.get("/invigilation", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/admin-login";
+		return redirectToCurrentState(req, res);
+	}
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/invigilation"
+	)
+		return redirectToCurrentState(req, res);
+
+	req.session.currentState = "/invigilation";
+
+	try {
+		const submissions = [];
+		TEAM_LIST.forEach((teamName) => {
+			const submissions_dir =
+				CURRENT_ROUND == 1 ? SUBMISSIONS_DIR_1 : SUBMISSIONS_DIR_2;
+			const dir = path.join(submissions_dir, teamName);
+			const json_dir = path.join(dir, "submissions.json");
+
+			const team_submissions = readSubmissions(json_dir);
+
+			const submission = {
+				teamName: teamName,
+				team_submissions: team_submissions,
+			};
+
+			submissions.push(submission);
+		});
+
+		res.render("invigilation", {
+			title: "Submissions Log",
+			submissions: submissions,
+			test_state: TEST_STATE,
+		});
+	} catch (error) {
+		console.error("Error reading submissions:", error);
+		res.status(500).send("Error reading submissions");
+	}
+});
+
+app.post("/invigilation-end-test", (req, res) => {
+	TEST_STATE = "JUDGING";
+
+	log("Administrator ended the test and will be initiating judging");
+
+	return redirectToCurrentState(req, res);
+});
+
+app.post("/verify", (req, res) => {
+	if (TEST_STATE != "JUDGING") {
+		res.status(500).send("Internal Server Error");
+		return redirectToCurrentState(req, res);
+	}
+
+	let judgingArray = [];
+
+	let rstatus = true;
+
+	TEAM_LIST.every((teamName) => {
+		const submissions_dir =
+			CURRENT_ROUND == 1 ? SUBMISSIONS_DIR_1 : SUBMISSIONS_DIR_2;
+		const dir = path.join(submissions_dir, teamName);
+		const json_dir = path.join(dir, "submissions.json");
+
+		const team_submissions = readSubmissions(json_dir);
+
+		const judge_view_dir =
+			CURRENT_ROUND == 1 ? JUDGE_VIEW_DIR_1 : JUDGE_VIEW_DIR_2;
+		const img_dir = path.join(judge_view_dir, teamName);
+
+		let status = true;
+
+		team_submissions.every((submission) => {
+			const baseName = path.basename(
+				submission.uploadedFilename,
+				path.extname(submission.uploadedFilename),
+			);
+			const ext = path.extname(submission.imageFilename);
+			const judgement_filename = `${baseName}${ext}`;
+
+			const judgingToken = {
+				teamName: teamName,
+				question: submission.imageFilename,
+				solution: judgement_filename,
+				score: 0,
+			};
+
+			judgingArray.push(judgingToken);
+
+			if (!fs.existsSync(path.join(img_dir, judgement_filename))) {
+				log(
+					`Initiation of judging failed as ${path.join(img_dir, judgement_filename)} is missing`,
+				);
+				status = false;
+				return false;
+			}
+
+			return true;
+		});
+
+		if (!status) rstatus = false;
+
+		return status;
+	});
+
+	if (!rstatus) return redirectToCurrentState(req, res);
+
+	req.session.judgingArray = shuffleArray(judgingArray);
+
+	req.session.currentState = "/judging";
+
+	log("Judging initiated successfully");
+
+	return redirectToCurrentState(req, res);
+});
+
+app.get("/judging", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/admin-login";
+		return redirectToCurrentState(req, res);
+	}
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/judging"
+	)
+		return redirectToCurrentState(req, res);
+
+	req.session.currentState = "/judging";
+
+	res.render("judging", {
+		title: "Judging",
+		judgingArray: req.session.judgingArray,
+		judgingArrayLength: req.session.judgingArray.length,
+		currentRound: CURRENT_ROUND == 1 ? "round-1" : "round-2",
+	});
+});
+
+app.post("/submit-scores", upload.none(), (req, res) => {
+	if (TEST_STATE != "JUDGING") {
+		res.status(500).send("Internal Server Error");
+		return redirectToCurrentState(req, res);
+	}
+
+	const scores = JSON.parse(req.body.scores);
+
+	let finalisedScores = {};
+
+	TEAM_LIST.forEach((teamName) => {
+		finalisedScores[teamName] = 0;
+	});
+
+	req.session.judgingArray.forEach((judgingToken, index) => {
+		judgingToken.score = parseInt(scores[index]);
+
+		finalisedScores[judgingToken.teamName] += judgingToken.score;
+	});
+
+	req.session.finalisedScores = finalisedScores;
+
+	log(`Admin has completed tallying scores`);
+
+	req.session.currentState = "/view-scores";
+
+	return redirectToCurrentState(req, res);
+});
+
+app.get("/view-scores", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/admin-login";
+		return redirectToCurrentState(req, res);
+	}
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/view-scores"
+	)
+		return redirectToCurrentState(req, res);
+
+	req.session.currentState = "/view-scores";
+
+	let finalisedScoresArr = [];
+
+	TEAM_LIST.forEach((teamName) => {
+		const scoreToken = {
+			teamName: teamName,
+			score: req.session.finalisedScores[teamName],
+		};
+
+		finalisedScoresArr.push(scoreToken);
+	});
+
+	finalisedScoresArr.sort((a, b) => b.score - a.score);
+
+	res.render("scores", {
+		title: "Scores",
+		finalisedScores: finalisedScoresArr,
+		currentRound: CURRENT_ROUND == 1 ? "round-1" : "round-2",
+	});
 });

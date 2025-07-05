@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Image Pair Scoring</title>
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+	<body>
+		<h1>Image Pair Scoring</h1>
+		<span id="judgingArrayLength"><%= judgingArrayLength %></span>
+		<% judgingArray.forEach((judgingToken, index) => { %>
+		<div
+			class="image-container"
+			id="<%= `image-container-${index}` %>"
+			display="none"
+		>
+			<img
+				id="image1"
+				src="/<%= `problems-${currentRound}` %>/<%= judgingToken.question %>"
+				alt="Image 1"
+			/>
+			<img
+				id="image2"
+				src="/<%= `judge-view-${currentRound}` %>/<%= judgingToken.teamName %>/<%= judgingToken.solution %>"
+				alt="Image 2"
+			/>
+		</div>
+		<% }); %>
+
+		<span id="val-alert" display="none">Check value</span>
+		<form id="scoringForm">
+			<div class="controls">
+				<input
+					type="number"
+					id="score"
+					name="score"
+					placeholder="Enter score"
+					min="0"
+					required
+				/>
+				<input
+					type="number"
+					id="confirmScore"
+					name="confirmScore"
+					placeholder="Confirm score"
+					min="0"
+					required
+				/>
+				<button type="button" id="nextBtn" class="next-btn">
+					Next Submission
+				</button>
+			</div>
+		</form>
+
+		<form id="resultsForm" method="post" action="/submit-final-scores">
+			<input type="hidden" name="results" id="resultsInput" />
+		</form>
+
+		<script src="/js/judging.js"></script>
+	</body>
+</html>

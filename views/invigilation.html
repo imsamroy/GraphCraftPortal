@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title><%= title %></title>
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+	<body>
+		<div class="header-container">
+			<h1>Submissions</h1>
+			<div class="test-status">
+				<span class="status-indicator complete"></span>
+				<span
+					>Test <%= test_state == "RUNNING" ? "Running" : "Completed"
+					%></span
+				>
+			</div>
+		</div>
+
+		<% if (test_state == "RUNNING") { %>
+		<form method="POST" action="/invigilation-end-test">
+			<button type="submit" class="start-btn">End Test</button>
+		</form>
+		<% } else { %>
+		<form method="POST" action="/verify">
+			<button type="submit" class="start-btn">
+				Verify Judging Files
+			</button>
+		</form>
+		<% } %> <% submissions.forEach((submission) => { %>
+		<h1>Submissions of Team <%= submission.teamName %></h1>
+		<% if (submission.team_submissions.length === 0) { %>
+		<p class="no-submissions">No submissions were made by this team.</p>
+		<% } else { %>
+		<table class="submissions-table">
+			<thead>
+				<tr>
+					<th>Image Filename</th>
+					<th>Uploaded File</th>
+					<th>Submission Time</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% submission.team_submissions.forEach(function(s) { %>
+				<tr>
+					<td><%= s.imageFilename %></td>
+					<td>
+						<% if (s.uploadedFilename) { %>
+						<a
+							href="/submissions/<%= encodeURIComponent(submission.uploadedFilename) %>"
+							download
+						>
+							<%= s.uploadedFilename %>
+						</a>
+						<% } else { %> No file uploaded <% } %>
+					</td>
+					<td><%= new Date(s.timestamp).toLocaleString() %></td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+		<% } %> <% }); %>
+	</body>
+
+	<script>
+		setTimeout(function () {
+			location = "";
+		}, 30000);
+	</script>
+</html>

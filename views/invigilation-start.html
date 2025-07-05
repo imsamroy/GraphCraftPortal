@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title><%= title %></title>
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+	<body>
+		<div class="start-container">
+			<div class="start-card">
+				<h1>GraphCraft Selection Test</h1>
+				<p>
+					You will be given a series of patterns to recreate on
+					Desmos:
+				</p>
+				<ol class="instructions">
+					<li>Upload your desmos file</li>
+					<li>Click "Submit" to proceed</li>
+					<li>
+						After submitting your solutions to the desired problems,
+						click "Final Submit"
+					</li>
+				</ol>
+
+				<form method="POST" action="/invigilation-start-test">
+					<button type="submit" class="start-btn">Start Test</button>
+				</form>
+
+				<div class="test-info">
+					<h3>Test Information</h3>
+					<p>Test duration: 45 Minutes</p>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
