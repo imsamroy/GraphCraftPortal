@@ -8,27 +8,35 @@
 	</head>
 	<body>
 		<div class="header-container">
-			<h1>Scores</h1>
-			<div class="test-status">
-				<span class="status-indicator complete"></span>
-				<span>Test Complete</span>
+			<div class="timer-header">
+				<div class="test-status">
+					<span>Judging Complete</span>
+				</div>
+				<h1 class="heading">Scores</h1>
 			</div>
+			<form method="POST" action="/check-qualifiers">
+				<button type="submit" class="start-btn">Next</button>
+			</form>
 		</div>
 
 		<table class="submissions-table">
 			<thead>
 				<tr>
 					<th>Team Name</th>
+					<% questions.forEach((fileName) => { %>
+					<th><%= fileName.slice(0, -4) %></th>
+					<% }); %>
 					<th>Score</th>
-					<th>Rank</th>
 				</tr>
 			</thead>
 			<tbody>
 				<% finalisedScores.forEach((scoreToken, index) => { %>
 				<tr>
 					<td><%= scoreToken.teamName %></td>
+					<% questions.forEach((fileName) => { %>
+					<td><%= scoreToken.problemScores[fileName] %></td>
+					<% }); %>
 					<td><%= scoreToken.score %></td>
-					<td><%= index + 1 %></td>
 				</tr>
 				<% }); %>
 			</tbody>

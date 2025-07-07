@@ -8,64 +8,60 @@
 	</head>
 	<body>
 		<div class="header-container">
-			<h1>Submissions</h1>
-			<div class="test-status">
-				<span class="status-indicator complete"></span>
-				<span
-					>Test <%= test_state == "RUNNING" ? "Running" : "Completed"
-					%></span
-				>
+			<div class="timer-header">
+				<div class="test-status">
+					<span
+						>Test <%= test_state == "RUNNING" ? "Running" :
+						"Completed" %></span
+					>
+				</div>
+				<h1 class="heading">Submissions</h1>
 			</div>
+			<% if (test_state == "RUNNING") { %>
+			<form method="POST" action="/invigilation-end-test">
+				<button type="submit" class="start-btn">End Test</button>
+			</form>
+			<% } else { %>
+			<form method="POST" action="/verify">
+				<button type="submit" class="start-btn">
+					Verify Judging Files
+				</button>
+			</form>
+			<% } %>
 		</div>
 
-		<% if (test_state == "RUNNING") { %>
-		<form method="POST" action="/invigilation-end-test">
-			<button type="submit" class="start-btn">End Test</button>
-		</form>
-		<% } else { %>
-		<form method="POST" action="/verify">
-			<button type="submit" class="start-btn">
-				Verify Judging Files
-			</button>
-		</form>
-		<% } %> <% submissions.forEach((submission) => { %>
-		<h1>Submissions of Team <%= submission.teamName %></h1>
-		<% if (submission.team_submissions.length === 0) { %>
-		<p class="no-submissions">No submissions were made by this team.</p>
-		<% } else { %>
-		<table class="submissions-table">
-			<thead>
-				<tr>
-					<th>Image Filename</th>
-					<th>Uploaded File</th>
-					<th>Submission Time</th>
-				</tr>
-			</thead>
-			<tbody>
-				<% submission.team_submissions.forEach(function(s) { %>
-				<tr>
-					<td><%= s.imageFilename %></td>
-					<td>
-						<% if (s.uploadedFilename) { %>
-						<a
-							href="/submissions/<%= encodeURIComponent(submission.uploadedFilename) %>"
-							download
-						>
-							<%= s.uploadedFilename %>
-						</a>
-						<% } else { %> No file uploaded <% } %>
-					</td>
-					<td><%= new Date(s.timestamp).toLocaleString() %></td>
-				</tr>
-				<% }); %>
-			</tbody>
-		</table>
-		<% } %> <% }); %>
+		<% submissions.forEach((submission) => { %>
+		<div class="problem-card">
+			<h1 class="team-name">
+				Submissions of Team <%= submission.teamName %>
+			</h1>
+			<% if (submission.team_submissions.length === 0) { %>
+			<p class="no-submissions">No submissions were made by this team.</p>
+			<% } else { %>
+			<table class="submissions-table">
+				<thead>
+					<tr>
+						<th style="width: 60%">Problem</th>
+						<th>Submission Time</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% submission.team_submissions.forEach(function(s) { %>
+					<tr>
+						<td><%= s.imageFilename.slice(0, -4) %></td>
+						<td><%= new Date(s.timestamp).toLocaleString() %></td>
+					</tr>
+					<% }); %>
+				</tbody>
+			</table>
+			<% } %>
+		</div>
+		<% }); %>
 	</body>
 
 	<script>
 		setTimeout(function () {
 			location = "";
-		}, 30000);
+		}, 10000);
 	</script>
 </html>

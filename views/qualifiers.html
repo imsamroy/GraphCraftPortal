@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title><%= title %></title>
+		<link rel="stylesheet" href="/css/style.css" />
+	</head>
+	<body>
+		<div class="header-container">
+			<div class="timer-header">
+				<div class="test-status">
+					<span>Judging Complete</span>
+				</div>
+				<h1 class="heading">Qualifiers</h1>
+			</div>
+			<form method="POST" action="/prepare-admin">
+				<button type="submit" class="start-btn">Next</button>
+			</form>
+		</div>
+
+		<table class="submissions-table">
+			<thead>
+				<tr>
+					<th>Team Name</th>
+					<th>Score</th>
+				</tr>
+			</thead>
+			<tbody>
+				<% qualifierList.forEach((qualifyToken, index) => { %>
+				<tr>
+					<td><%= qualifyToken.teamName %></td>
+					<td><%= qualifyToken.score %></td>
+				</tr>
+				<% }); %>
+			</tbody>
+		</table>
+	</body>
+</html>

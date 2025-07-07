@@ -12,6 +12,16 @@ const SUBMISSIONS_DIR_1 = path.join(process.cwd(), "submissions-round-1");
 const SUBMISSIONS_DIR_2 = path.join(process.cwd(), "submissions-round-2");
 const JUDGE_VIEW_DIR_1 = path.join(process.cwd(), "judge-view-round-1");
 const JUDGE_VIEW_DIR_2 = path.join(process.cwd(), "judge-view-round-2");
+const QUALIFIERS_DIR_1 = path.join(
+	process.cwd(),
+	"judge-view-round-1/qualifiers.json",
+);
+const QUALIFIERS_DIR_2 = path.join(
+	process.cwd(),
+	"judge-view-round-2/qualifiers.json",
+);
+const DURATION = [45, 60];
+const CREDENTIALS = path.join(process.cwd(), "credentials.json");
 
 let TOTAL_TEAMS = 0;
 let TEAM_LIST = [];
@@ -19,6 +29,8 @@ let FREEZE_LOGIN = false;
 
 let CURRENT_ROUND = 0;
 let TEST_STATE = "RUNNING";
+
+let NEXT_ROUND = false;
 
 // Modify the initialization code:
 function initializeApp() {
@@ -34,6 +46,10 @@ function initializeApp() {
 		if (!fs.existsSync(dir)) {
 			fs.mkdirSync(dir, { recursive: true });
 		}
+	});
+
+	[QUALIFIERS_DIR_1, QUALIFIERS_DIR_2].forEach((file) => {
+		fs.writeFileSync(file, JSON.stringify([], null, 2));
 	});
 }
 
@@ -175,7 +191,13 @@ function makeFolderWithTeamName2(req, teamName) {
 app.post("/login", upload.none(), (req, res) => {
 	if (FREEZE_LOGIN) return res.redirect("/login");
 
-	teamName = req.body.name;
+	const teamName = req.body.name;
+	const password = req.body.password;
+
+	const passList = readSubmissions(CREDENTIALS);
+
+	if (passList[teamName] != password || teamName == "Admin")
+		return redirectToCurrentState(req, res);
 
 	TEAM_LIST.push(teamName);
 
@@ -191,7 +213,7 @@ app.post("/login", upload.none(), (req, res) => {
 	req.session.currentState = "/start";
 	req.session.currentRound = 0;
 
-	log("Team " + req.session.teamName + " logged in.");
+	log(`Team ${req.session.teamName} logged in`);
 
 	return redirectToCurrentState(req, res);
 });
@@ -208,7 +230,9 @@ app.get("/start", (req, res) => {
 		return redirectToCurrentState(req, res);
 
 	res.render("start", {
-		title: "Start",
+		title: "Start Test",
+		currentRound: req.session.currentRound + 1,
+		duration: DURATION[req.session.currentRound],
 	});
 });
 
@@ -239,7 +263,7 @@ app.post("/start-test", (req, res) => {
 
 	req.session.testStarted = true;
 	req.session.startTime = Date.now(); // Initialize timer
-	req.session.timeLimit = 45 * 60 * 1000; // 45 minutes
+	req.session.timeLimit = DURATION[req.session.currentRound - 1] * 60 * 1000; // 45 minutes
 	req.session.allImages = pngFiles;
 	req.session.availableImages = shuffleArray(pngFiles);
 	req.session.displayedImages = req.session.availableImages.slice(0, 4);
@@ -255,6 +279,45 @@ app.post("/start-test", (req, res) => {
 	return redirectToCurrentState(req, res);
 });
 
+function submitTest(req, res) {
+	if (req.session.currentRound == 1) {
+		req.session.currentState = "/prepare";
+
+		log(
+			`Team ${req.session.teamName} has final submitted round ${req.session.currentRound} as time ran out`,
+		);
+
+		return redirectToCurrentState(req, res);
+	} else {
+		req.session.currentState = "/finish";
+
+		log(
+			`Team ${req.session.teamName} has final submitted round ${req.session.currentRound} as time ran out`,
+		);
+
+		return redirectToCurrentState(req, res);
+	}
+}
+
+app.use((req, res, next) => {
+	if (req.session.currentState == "/test") {
+		const now = Date.now();
+
+		// Calculate remaining time
+		const elapsed = now - req.session.startTime;
+		req.session.remainingTime = Math.max(
+			0,
+			req.session.timeLimit - elapsed,
+		);
+
+		// Auto-finalize if time expired
+		if (req.session.remainingTime <= 0) {
+			return submitTest(req, res);
+		}
+	}
+	next();
+});
+
 app.get("/test", (req, res) => {
 	if (req.session.currentState == null) {
 		req.session.currentState = "/login";
@@ -268,10 +331,8 @@ app.get("/test", (req, res) => {
 		round: req.session.currentRound == 1 ? "Round 1" : "Round 2",
 		images: req.session.displayedImages || [],
 		totalCount: req.session.allImages ? req.session.allImages.length : 0,
-		remainingCount: req.session.availableImages
-			? req.session.availableImages.length
-			: 0,
-		remainingTime: req.session.remainingTime || 0, // Add timer value
+		startTime: req.session.startTime || 0,
+		duration: req.session.timeLimit || 0,
 		problemDir:
 			req.session.currentRound == 1
 				? "problems-round-1"
@@ -359,7 +420,6 @@ app.post("/submit-image", upload.single("submission"), (req, res) => {
 		res.json({
 			success: true,
 			displayedImages: req.session.displayedImages,
-			remainingCount: req.session.availableImages.length,
 			totalCount: req.session.allImages.length,
 			uploadedFile: req.file ? req.file.filename : null,
 		});
@@ -369,25 +429,31 @@ app.post("/submit-image", upload.single("submission"), (req, res) => {
 	}
 });
 
+app.get("/download/:filename", (req, res) => {
+	const filename = decodeURIComponent(req.params.filename); // Decode the filename
+
+	if (req.session.currentState != "/test") res.status(403).send("Forbidden");
+
+	const problems_dir =
+		req.session.currentRound == 1 ? PROBLEMS_DIR_1 : PROBLEMS_DIR_2;
+
+	const filePath = path.join(problems_dir, filename);
+
+	if (fs.existsSync(filePath)) {
+		res.download(filePath, filename, (err) => {
+			if (err) {
+				console.error("Download error:", err);
+				res.status(500).send("Error downloading file");
+			}
+		});
+	} else {
+		res.status(404).send("File not found");
+	}
+});
+
 // Final submit route
 app.post("/final-submit", (req, res) => {
-	if (req.session.currentRound == 1) {
-		req.session.currentState = "/prepare";
-
-		log(
-			`Team ${req.session.teamName} has final submitted round ${req.session.currentRound}`,
-		);
-
-		return redirectToCurrentState(req, res);
-	} else {
-		req.session.currentState = "/finish";
-
-		log(
-			`Team ${req.session.teamName} has final submitted round ${req.session.currentRound}`,
-		);
-
-		return redirectToCurrentState(req, res);
-	}
+	return submitTest(req, res);
 });
 
 app.get("/prepare", (req, res) => {
@@ -407,6 +473,20 @@ app.get("/prepare", (req, res) => {
 });
 
 app.post("/next-round", (req, res) => {
+	if (!NEXT_ROUND) return redirectToCurrentState(req, res);
+
+	let status = true;
+
+	TEAM_LIST.every((teamName) => {
+		status = !(req.session.teamName == teamName);
+		return status;
+	});
+
+	if (status) {
+		req.session.currentState = "/finish";
+		return redirectToCurrentState(req, res);
+	}
+
 	makeFolderWithTeamName2(req, req.session.teamName);
 
 	req.session.teamSubmissionsJSONDir = path.join(
@@ -454,10 +534,12 @@ app.get("/admin-login", (req, res) => {
 app.post("/admin-login", upload.none(), (req, res) => {
 	password = req.body.pass;
 
-	if (password != "Rihnosaur") return redirectToCurrentState(req, res);
+	const passList = readSubmissions(CREDENTIALS);
+
+	if (passList["Admin"] != password) return redirectToCurrentState(req, res);
 
 	req.session.currentState = "/invigilation-start";
-	req.session.currentRound = 0;
+	CURRENT_ROUND = 0;
 
 	log("Administrator logged in");
 
@@ -480,7 +562,9 @@ app.get("/invigilation-start", (req, res) => {
 	log("Administrator started the test");
 
 	res.render("invigilation-start", {
-		title: "Start",
+		title: "Invigilation Start",
+		currentRound: CURRENT_ROUND + 1,
+		duration: DURATION[CURRENT_ROUND],
 	});
 });
 
@@ -488,9 +572,14 @@ app.post("/invigilation-start-test", (req, res) => {
 	CURRENT_ROUND++;
 	FREEZE_LOGIN = true;
 
+	const qualifiers_dir =
+		CURRENT_ROUND == 1 ? QUALIFIERS_DIR_1 : QUALIFIERS_DIR_2;
+
+	writeSubmissions(qualifiers_dir, TEAM_LIST);
+
 	req.session.currentState = "/invigilation";
 
-	log("Admin started round " + CURRENT_ROUND);
+	log(`Administrator started round ${CURRENT_ROUND}`);
 
 	return redirectToCurrentState(req, res);
 });
@@ -530,6 +619,7 @@ app.get("/invigilation", (req, res) => {
 			title: "Submissions Log",
 			submissions: submissions,
 			test_state: TEST_STATE,
+			currentRound: CURRENT_ROUND,
 		});
 	} catch (error) {
 		console.error("Error reading submissions:", error);
@@ -642,21 +732,43 @@ app.post("/submit-scores", upload.none(), (req, res) => {
 
 	const scores = JSON.parse(req.body.scores);
 
+	const problems_dir =
+		req.session.currentRound == 1 ? PROBLEMS_DIR_1 : PROBLEMS_DIR_2;
+
+	const files = fs.readdirSync(problems_dir);
+	const pngFiles = files.filter((file) =>
+		file.toLowerCase().endsWith(".png"),
+	);
+
 	let finalisedScores = {};
 
 	TEAM_LIST.forEach((teamName) => {
-		finalisedScores[teamName] = 0;
+		let problemScores = {};
+
+		pngFiles.forEach((fileName) => {
+			problemScores[fileName] = 0;
+		});
+
+		let scores = {
+			problemScores: problemScores,
+			totalScore: 0,
+		};
+
+		finalisedScores[teamName] = scores;
 	});
 
 	req.session.judgingArray.forEach((judgingToken, index) => {
 		judgingToken.score = parseInt(scores[index]);
 
-		finalisedScores[judgingToken.teamName] += judgingToken.score;
+		finalisedScores[judgingToken.teamName].problemScores[
+			judgingToken.question
+		] = judgingToken.score;
+		finalisedScores[judgingToken.teamName].totalScore += judgingToken.score;
 	});
 
 	req.session.finalisedScores = finalisedScores;
 
-	log(`Admin has completed tallying scores`);
+	log(`Administrator has completed tallying scores`);
 
 	req.session.currentState = "/view-scores";
 
@@ -676,12 +788,20 @@ app.get("/view-scores", (req, res) => {
 
 	req.session.currentState = "/view-scores";
 
+	const problems_dir = CURRENT_ROUND == 1 ? PROBLEMS_DIR_1 : PROBLEMS_DIR_2;
+
+	const files = fs.readdirSync(problems_dir);
+	const pngFiles = files.filter((file) =>
+		file.toLowerCase().endsWith(".png"),
+	);
+
 	let finalisedScoresArr = [];
 
 	TEAM_LIST.forEach((teamName) => {
 		const scoreToken = {
 			teamName: teamName,
-			score: req.session.finalisedScores[teamName],
+			problemScores: req.session.finalisedScores[teamName].problemScores,
+			score: req.session.finalisedScores[teamName].totalScore,
 		};
 
 		finalisedScoresArr.push(scoreToken);
@@ -691,7 +811,79 @@ app.get("/view-scores", (req, res) => {
 
 	res.render("scores", {
 		title: "Scores",
+		questions: pngFiles,
 		finalisedScores: finalisedScoresArr,
 		currentRound: CURRENT_ROUND == 1 ? "round-1" : "round-2",
 	});
+});
+
+app.post("/check-qualifiers", upload.none(), (req, res) => {
+	if (TEST_STATE != "JUDGING") {
+		res.status(500).send("Internal Server Error");
+		return redirectToCurrentState(req, res);
+	}
+
+	const qualifiers_dir =
+		CURRENT_ROUND == 1 ? QUALIFIERS_DIR_1 : QUALIFIERS_DIR_2;
+
+	const qualifiers = readSubmissions(qualifiers_dir);
+
+	log(`List of qualifiers are ${qualifiers}`);
+
+	log(`Administrator displayed qualifiers list`);
+
+	TEAM_LIST = qualifiers;
+
+	req.session.currentState = "/qualifiers";
+
+	return redirectToCurrentState(req, res);
+});
+
+app.get("/qualifiers", (req, res) => {
+	if (req.session.currentState == null) {
+		req.session.currentState = "/admin-login";
+		return redirectToCurrentState(req, res);
+	}
+	if (
+		req.session.currentState != null &&
+		req.session.currentState != "/qualifiers"
+	)
+		return redirectToCurrentState(req, res);
+
+	req.session.currentState = "/qualifiers";
+
+	let qualifierList = [];
+
+	TEAM_LIST.forEach((teamName) => {
+		const qualifyToken = {
+			teamName: teamName,
+			score: req.session.finalisedScores[teamName].totalScore,
+		};
+
+		qualifierList.push(qualifyToken);
+	});
+
+	qualifierList.sort((a, b) => b.score - a.score);
+
+	res.render("qualifiers", {
+		title: "Qualifiers",
+		qualifierList: qualifierList,
+		currentRound: CURRENT_ROUND == 1 ? "round-1" : "round-2",
+	});
+});
+
+app.post("/prepare-admin", upload.none(), (req, res) => {
+	if (TEST_STATE != "JUDGING") {
+		res.status(500).send("Internal Server Error");
+		return redirectToCurrentState(req, res);
+	}
+
+	NEXT_ROUND = true;
+	TEST_STATE = "RUNNING";
+
+	req.session.currentState = "/invigilation-start";
+
+	log("Administrator will start next round");
+
+	return redirectToCurrentState(req, res);
 });

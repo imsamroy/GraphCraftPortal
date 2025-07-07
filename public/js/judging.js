@@ -4,14 +4,6 @@ document.addEventListener("DOMContentLoaded", function () {
 		input.addEventListener("click", showNextSubmissions);
 	});
 
-	for (
-		let i = 0;
-		i < parseInt(document.getElementById("judgingArrayLength").innerHTML);
-		i++
-	) {
-		document.getElementById(`image-container-${i}`).style.display = "none";
-	}
-
 	document.getElementById(`image-container-0`).style.display = "block";
 
 	// Final submit button handler

@@ -8,8 +8,8 @@
 	</head>
 	<body>
 		<div class="start-container">
-			<div class="start-card">
-				<h1>GraphCraft Selection Test</h1>
+			<div class="instruction-card">
+				<h1>Scoring Methods and Criteria:</h1>
 				<p>
 					You will be given a series of patterns to recreate on
 					Desmos:
@@ -22,14 +22,18 @@
 						click "Final Submit"
 					</li>
 				</ol>
+			</div>
+			<div class="card-container">
+				<div class="card">
+					<h1 class="login-head">
+						Wait for Administrator's instruction
+					</h1>
 
-				<form method="POST" action="/next-round">
-					<button type="submit" class="start-btn">Next Round</button>
-				</form>
-
-				<div class="test-info">
-					<h3>Test Information</h3>
-					<p>Test duration: 45 Minutes</p>
+					<form id="redirectForm" method="POST" action="/next-round">
+						<div class="btn-container start-btn-container">
+							<button type="submit">Next Round</button>
+						</div>
+					</form>
 				</div>
 			</div>
 		</div>

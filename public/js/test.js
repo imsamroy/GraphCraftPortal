@@ -39,6 +39,14 @@ document.addEventListener("DOMContentLoaded", function () {
 			modal.style.display = "none";
 		}
 	});
+
+	const startTimeElement = document.getElementById("startTime");
+	const durationElement = document.getElementById("duration");
+	const startTime = parseInt(startTimeElement.dataset.remaining);
+	const duration = parseInt(durationElement.dataset.remaining);
+	if (startTime > 0) {
+		startTimer(startTime, duration);
+	}
 });
 
 function handleFileSelect(event) {
@@ -48,7 +56,7 @@ function handleFileSelect(event) {
 		`file-name-${imageFilename}`,
 	);
 	const submitButton = input
-		.closest(".image-card")
+		.closest(".problem-card")
 		.querySelector(".submit-btn");
 
 	if (input.files.length > 0) {
@@ -65,7 +73,7 @@ function handleFileSelect(event) {
 function handleImageSubmission(event) {
 	const button = event.target;
 	const image = button.getAttribute("data-image");
-	const card = button.closest(".image-card");
+	const card = button.closest(".problem-card");
 
 	if (!image || !card) return;
 
@@ -100,7 +108,7 @@ function handleImageSubmission(event) {
 
 					if (
 						data.displayedImages.length >
-						document.querySelectorAll(".image-card").length
+						document.querySelectorAll(".problem-card").length
 					) {
 						addNewImageCard(
 							data.displayedImages[
@@ -128,19 +136,39 @@ function addNewImageCard(imageFilename) {
 	const container = document.getElementById("imageContainer");
 
 	const card = document.createElement("div");
-	card.className = "image-card fade-in";
+	card.className = "problem-card fade-in";
 	card.setAttribute("data-filename", imageFilename);
 
+	const imageContainerDiv = document.createElement("div");
+	imageContainerDiv.className = "image-container";
+
+	const ahref = document.createElement("a");
+	ahref.href = `/downloads/${encodeURIComponent(imageFilename)}`;
+	ahref.download = true;
+
 	const img = document.createElement("img");
+	img.className = "clickable-image";
+	img.title = "Click to Download";
 	img.src = `/${document.getElementById("problemDir").innerHTML}/${encodeURIComponent(imageFilename)}`;
 	img.alt = imageFilename;
+
+	ahref.appendChild(img);
 
 	const nameDiv = document.createElement("div");
 	nameDiv.className = "image-name";
 	nameDiv.textContent = imageFilename;
 
+	const btnContainerDiv = document.createElement("div");
+	btnContainerDiv.className = "btn-container";
+
+	const btnContainerIntDiv = document.createElement("div");
+	btnContainerIntDiv.className = "btn-container-int";
+
 	const uploadContainer = document.createElement("div");
 	uploadContainer.className = "file-upload-container";
+
+	imageContainerDiv.appendChild(ahref);
+	imageContainerDiv.appendChild(nameDiv);
 
 	const fileInput = document.createElement("input");
 	fileInput.type = "file";
@@ -168,13 +196,16 @@ function addNewImageCard(imageFilename) {
 	button.textContent = "Submit";
 	button.disabled = true;
 
+	btnContainerIntDiv.appendChild(uploadContainer);
+	btnContainerIntDiv.appendChild(button);
+
+	btnContainerDiv.appendChild(btnContainerIntDiv);
+
 	fileInput.addEventListener("change", handleFileSelect);
 	button.addEventListener("click", handleImageSubmission);
 
-	card.appendChild(img);
-	card.appendChild(nameDiv);
-	card.appendChild(uploadContainer);
-	card.appendChild(button);
+	card.appendChild(imageContainerDiv);
+	card.appendChild(btnContainerDiv);
 
 	container.appendChild(card);
 
@@ -195,4 +226,27 @@ function submitFinalForm() {
 
 	document.body.appendChild(form);
 	form.submit();
+}
+
+function startTimer(startTime, duration) {
+	const timerElement = document.getElementById("timer");
+
+	function updateTimer() {
+		const elapsed = Date.now() - startTime;
+		const remaining = Math.floor((duration - elapsed) / 1000);
+		const minutes = Math.max(Math.floor(remaining / 60), 0);
+		const seconds = Math.max(remaining % 60, 0);
+
+		timerElement.textContent = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+
+		if (remaining <= 0) {
+			window.location.href = "/test";
+		}
+	}
+
+	// Initial update
+	updateTimer();
+
+	// Update every second
+	timerInterval = setInterval(updateTimer, 500);
 }

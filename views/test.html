@@ -8,33 +8,43 @@
 	</head>
 	<body>
 		<div class="header-container">
-			<h1>GraphCraft <%= round %></h1>
-			<div class="test-status">
-				<span class="status-indicator active"></span>
-				<span>Test in progress</span>
+			<div class="timer-header">
+				<div class="test-status">
+					<!-- Add this after the progress bar -->
+					<div class="timer-container">
+						<span
+							>Time Remaining: <span id="timer">45:00</span></span
+						>
+					</div>
 
-				<div class="vl"></div>
-
-				<!-- Add this after the progress bar -->
-				<div class="timer-container">
-					<span>Time Remaining: <span id="timer">45:00</span></span>
+					<!-- Add this hidden element to store initial time -->
+					<div
+						id="startTime"
+						data-remaining="<%= startTime %>"
+						style="display: none"
+					></div>
+					<div
+						id="duration"
+						data-remaining="<%= duration %>"
+						style="display: none"
+					></div>
+					<span id="problemDir" style="display: none"
+						><%= problemDir %></span
+					>
 				</div>
+				<h1 class="heading">GraphCraft <%= round %></h1>
+			</div>
 
-				<!-- Add this hidden element to store initial time -->
-				<div
-					id="initialRemainingTime"
-					data-remaining="<%= remainingTime %>"
-					style="display: none"
-				></div>
-				<span id="problemDir" visibility="hidden"
-					><%= problemDir %></span
-				>
+			<div class="final-submit-container">
+				<button id="finalSubmitBtn" class="final-submit-btn">
+					Final Submit
+				</button>
 			</div>
 		</div>
 
-		<div class="server-status">
+		<!-- <div class="server-status">
 			<span>Submitting one problem will reveal more!</span>
-		</div>
+		</div> -->
 
 		<% if (totalCount === 0) { %>
 		<div class="completion-container">
@@ -43,48 +53,54 @@
 			</p>
 		</div>
 		<% } else { %>
-		<div class="image-container" id="imageContainer">
+		<div class="problem-container" id="imageContainer">
 			<% images.forEach(function(file) { %>
-			<div class="image-card" data-filename="<%= file %>">
-				<a href="/download/<%= encodeURIComponent(file) %>" download>
-					<img
-						src="/<%= problemDir %>/<%= encodeURIComponent(file) %>"
-						alt="<%= file %>"
-						class="clickable-image"
-						title="Click to Download"
-					/>
-				</a>
-				<div class="image-name"><%= file %></div>
-
-				<div class="file-upload-container">
-					<input
-						type="file"
-						class="file-input"
-						id="file-<%= file %>"
-						accept="*/*"
-					/>
-					<label for="file-<%= file %>" class="upload-btn"
-						>Upload File</label
+			<div class="problem-card" data-filename="<%= file %>">
+				<div class="image-container">
+					<a
+						href="/download/<%= encodeURIComponent(file) %>"
+						download
 					>
-					<span class="file-name" id="file-name-<%= file %>"
-						>No file selected</span
-					>
+						<img
+							src="/<%= problemDir %>/<%= encodeURIComponent(file) %>"
+							alt="<%= file %>"
+							class="clickable-image"
+							title="Click to Download"
+						/>
+					</a>
+					<div class="image-name"><%= file %></div>
 				</div>
 
-				<button class="submit-btn" data-image="<%= file %>" disabled>
-					Submit
-				</button>
+				<div class="btn-container">
+					<div class="btn-container-int">
+						<div class="file-upload-container">
+							<input
+								type="file"
+								class="file-input"
+								id="file-<%= file %>"
+								accept="*/*"
+							/>
+							<label for="file-<%= file %>" class="upload-btn"
+								>Upload File</label
+							>
+							<span class="file-name" id="file-name-<%= file %>"
+								>No file selected</span
+							>
+						</div>
+
+						<button
+							class="submit-btn"
+							data-image="<%= file %>"
+							disabled
+						>
+							Submit
+						</button>
+					</div>
+				</div>
 			</div>
 			<% }); %>
 		</div>
 		<% } %>
-
-		<!-- Final Submit Button -->
-		<div class="final-submit-container">
-			<button id="finalSubmitBtn" class="final-submit-btn">
-				Final Submit
-			</button>
-		</div>
 
 		<!-- Confirmation Modal -->
 		<div id="confirmationModal" class="modal">
