@@ -266,7 +266,10 @@ app.post("/start-test", (req, res) => {
 	req.session.timeLimit = DURATION[req.session.currentRound - 1] * 60 * 1000; // 45 minutes
 	req.session.allImages = pngFiles;
 	req.session.availableImages = shuffleArray(pngFiles);
-	req.session.displayedImages = req.session.availableImages.slice(0, 4);
+	req.session.displayedImages = req.session.availableImages.slice(
+		0,
+		2 * req.session.currentRound,
+	);
 	req.session.finalSubmit = false;
 
 	req.session.currentState = "/test";
