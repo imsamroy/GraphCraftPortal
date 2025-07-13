@@ -1,67 +1,113 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title><%= title %></title>
-		<link rel="stylesheet" href="/css/style.css" />
-	</head>
-	<body>
-		<div class="header-container">
-			<div class="timer-header">
-				<div class="test-status">
-					<span
-						>Test <%= test_state == "RUNNING" ? "Running" :
-						"Completed" %></span
-					>
-				</div>
-				<h1 class="heading">Submissions</h1>
-			</div>
-			<% if (test_state == "RUNNING") { %>
-			<form method="POST" action="/invigilation-end-test">
-				<button type="submit" class="start-btn">End Test</button>
-			</form>
-			<% } else { %>
-			<form method="POST" action="/verify">
-				<button type="submit" class="start-btn">
-					Verify Judging Files
-				</button>
-			</form>
-			<% } %>
-		</div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title><%= title %></title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <div class="header-container">
+            <div class="timer-header">
+                <div class="test-status">
+                    <span
+                        >Test <%= test_state == "RUNNING" ? "Running" :
+                        "Completed" %></span
+                    >
+                </div>
+                <h1 class="heading">Submissions</h1>
+            </div>
+            <% if (test_state == "RUNNING") { %>
+            <form method="POST" action="/invigilation-end-test">
+                <button type="submit" class="start-btn">End Test</button>
+            </form>
+            <% } else { %>
+            <form method="POST" action="/verify">
+                <button type="submit" class="start-btn">
+                    Verify Judging Files
+                </button>
+            </form>
+            <% } %>
+        </div>
 
-		<% submissions.forEach((submission) => { %>
-		<div class="problem-card">
-			<h1 class="team-name">
-				Submissions of Team <%= submission.teamName %>
-			</h1>
-			<% if (submission.team_submissions.length === 0) { %>
-			<p class="no-submissions">No submissions were made by this team.</p>
-			<% } else { %>
-			<table class="submissions-table">
-				<thead>
-					<tr>
-						<th style="width: 60%">Problem</th>
-						<th>Submission Time</th>
-					</tr>
-				</thead>
-				<tbody>
-					<% submission.team_submissions.forEach(function(s) { %>
-					<tr>
-						<td><%= s.imageFilename.slice(0, -4) %></td>
-						<td><%= new Date(s.timestamp).toLocaleString() %></td>
-					</tr>
-					<% }); %>
-				</tbody>
-			</table>
-			<% } %>
-		</div>
-		<% }); %>
-	</body>
+        <div id="teamTimersContainer" class="problem-card">
+            <h2>Live Time Remaining</h2>
+            <table id="teamTimersTable">
+                <thead>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>Time Remaining</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
-	<script>
-		setTimeout(function () {
-			location = "";
-		}, 10000);
-	</script>
+        <% submissions.forEach((submission) => { %>
+        <div class="problem-card">
+            <h1 class="team-name">
+                Submissions of Team <%= submission.teamName %>
+            </h1>
+            <% if (submission.team_submissions.length === 0) { %>
+            <p class="no-submissions">No submissions were made by this team.</p>
+            <% } else { %>
+            <table class="submissions-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60%">Problem</th>
+                        <th>Submission Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% submission.team_submissions.forEach(function(s) { %>
+                    <tr>
+                        <td><%= s.imageFilename.slice(0, -4) %></td>
+                        <td><%= new Date(s.timestamp).toLocaleString() %></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            <% } %>
+        </div>
+        <% }); %>
+    </body>
+
+    <script>
+        setTimeout(function () {
+            location = "";
+        }, 10000);
+    </script>
+
+    <script>
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes.toString().padStart(2, "0")}:${seconds
+                .toString()
+                .padStart(2, "0")}`;
+        }
+
+        function updateTeamTimers() {
+            fetch("/api/team-timers")
+                .then((res) => res.json())
+                .then((data) => {
+                    const tbody = document.querySelector(
+                        "#teamTimersTable tbody",
+                    );
+                    tbody.innerHTML = "";
+                    data.forEach(({ teamName, remainingTime }) => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `<td>${teamName}</td><td>${formatTime(
+                            remainingTime,
+                        )}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                });
+        }
+
+        // Poll every 5 seconds
+        setInterval(updateTeamTimers, 5000);
+        updateTeamTimers();
+    </script>
 </html>

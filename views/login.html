@@ -1,43 +1,61 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title><%= title %></title>
-		<link rel="stylesheet" href="/css/style.css" />
-	</head>
-	<body>
-		<div class="start-container">
-			<div class="instruction-card"></div>
-			<div class="card-container">
-				<div class="card">
-					<h1 class="login-head">Team Login</h1>
-
-					<form id="redirectForm" method="POST" action="/login">
-						<div class="input-container">
-							<div class="input-hint">Team Name</div>
-							<input
-								type="text"
-								id="teamName"
-								name="name"
-								class="login-input password"
-								required
-							/>
-							<div class="input-hint">Password</div>
-							<input
-								type="password"
-								id="teamPass"
-								name="password"
-								class="login-input password"
-								required
-							/>
-						</div>
-						<div class="btn-container">
-							<button type="submit">Login</button>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
-	</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Team Member Login</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <div class="start-container">
+            <div class="instruction-card"></div>
+            <div class="card-container">
+                <div class="card">
+                    <h1 class="login-head">Team Member Login</h1>
+                    <form id="redirectForm" method="POST" action="/login">
+                        <div class="input-container">
+                            <div class="input-hint">Team Name</div>
+                            <input
+                                type="text"
+                                id="teamName"
+                                name="name"
+                                class="login-input password"
+                                required
+                            />
+                            <div class="input-hint">Password</div>
+                            <input
+                                type="password"
+                                id="teamPass"
+                                name="password"
+                                class="login-input password"
+                                required
+                            />
+                            <div class="input-hint">I am:</div>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="memberRole"
+                                    value="A"
+                                    required
+                                />
+                                Member A
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="memberRole"
+                                    value="B"
+                                    required
+                                />
+                                Member B
+                            </label>
+                        </div>
+                        <div class="btn-container">
+                            <button type="submit">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>
