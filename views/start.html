@@ -9,13 +9,23 @@
     <body>
         <div class="start-container">
             <div class="instruction-card">
+                <div class="logo-container" style="justify-content: center; margin-bottom: 30px;">
+                    <div class="logo"></div>
+                    <div>
+                        <h1 class="brand-title">Logique</h1>
+                        <div class="contest-subtitle">GraphCraft Selection Test</div>
+                    </div>
+                </div>
                 <h1>Contest Instructions:</h1>
                 <p>
                     You will be given a series of patterns to recreate on
                     Desmos:
                 </p>
                 <ol class="instructions">
-                    <li>Upload your desmos file</li>
+                    <li>Download the problem image by clicking on it</li>
+                    <li>Create your solution in Desmos</li>
+                    <li>Export your Desmos file</li>
+                    <li>Upload your solution file</li>
                     <li>Click "Submit" to proceed</li>
                     <li>
                         After submitting your solutions to the desired problems,
@@ -26,17 +36,18 @@
                 <div class="test-info">
                     <h3>Test Information</h3>
                     <p>Test duration: <%= duration %> Minutes</p>
-                    <p>Your role: <%= memberRole %></p>
+                    <p>Your role: Member <%= memberRole %></p>
+                    <p>Round: <%= currentRound <= 1 ? "1" : "2" %></p>
                 </div>
             </div>
             <div class="card-container">
                 <div class="card">
                     <h1 class="login-head">
                         GraphCraft <%= currentRound <= 1 ? "Round 1" : "Round 2"
-                        %> (<%= memberRole %>)
+                        %> (Member <%= memberRole %>)
                     </h1>
                     <% if (notStarted) { %>
-                    <div style="color: red; text-align: center; margin: 20px">
+                    <div style="color: var(--warning); text-align: center; margin: 20px; padding: 20px; background: rgba(255, 170, 0, 0.1); border: 1px solid rgba(255, 170, 0, 0.3); border-radius: 12px;">
                         Waiting for admin to start the test. Please wait...
                     </div>
                     <% } else { %>
@@ -51,8 +62,23 @@
         </div>
     </body>
     <script>
-        setTimeout(function () {
-            location = "";
-        }, 1000);
+        <% if (notStarted) { %>
+        // Check test status periodically without constant reloading
+        function checkTestStatus() {
+            fetch('/test-status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.started) {
+                        location.reload();
+                    } else {
+                        setTimeout(checkTestStatus, 3000); // Check every 3 seconds
+                    }
+                })
+                .catch(() => {
+                    setTimeout(checkTestStatus, 5000); // Fallback: check every 5 seconds
+                });
+        }
+        checkTestStatus();
+        <% } %>
     </script>
 </html>

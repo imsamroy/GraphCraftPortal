@@ -7,32 +7,35 @@
 		<link rel="stylesheet" href="/css/style.css" />
 	</head>
 	<body>
-		<div class="header-container">
-			<h1>
-				GraphCraft Selection Test
-				<span style="visibility: hidden" id="remainingCount"
-					><%= remainingCount %></span
-				><span style="visibility: hidden" id="totalCount"
-					><%= totalCount %></span
-				>
-			</h1>
-			<div class="test-status">
-				<span class="status-indicator active"></span>
-				<span>Test in progress</span>
-
-				<div class="vl"></div>
-
-				<!-- Add this after the progress bar -->
-				<div class="timer-container">
-					<span>Time Remaining: <span id="timer">45:00</span></span>
+		<div class="tech-header">
+			<div class="header-container">
+				<div class="header-left">
+<div class="logo-container">
+	<div class="logo-techclub" title="Tech Club"></div>
+	<div class="logo"></div>
+	<div class="logo-dpsaura" title="DPS Aura"></div>
+	<div>
+		<h1 class="brand-title">Logique</h1>
+		<div class="contest-subtitle">GraphCraft Selection Test</div>
+	</div>
+</div>
+					<span style="visibility: hidden" id="remainingCount"><%= remainingCount %></span>
+					<span style="visibility: hidden" id="totalCount"><%= totalCount %></span>
 				</div>
+				<div class="header-right">
+					<div class="test-status">
+						<span class="status-indicator active"></span>
+						<span>Test in progress</span>
+					</div>
 
-				<!-- Add this hidden element to store initial time -->
-				<div
-					id="initialRemainingTime"
-					data-remaining="<%= remainingTime %>"
-					style="display: none"
-				></div>
+					<div class="vl"></div>
+
+					<div class="timer-container">
+						<span>Time Remaining: <span id="timer">45:00</span></span>
+					</div>
+
+					<div id="initialRemainingTime" data-remaining="<%= remainingTime %>" style="display: none"></div>
+				</div>
 			</div>
 		</div>
 

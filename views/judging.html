@@ -1,5 +1,13 @@
-<!doctype html>
-<html lang="en">
+<!doctype h				<div class="header-left">
+					<div class="logo-container">
+						<div class="logo">
+							<div class="tech-club-logo"></div>
+						</div>
+						<div>
+							<h1 class="brand-title">Logique</h1>
+							<div class="contest-subtitle">GraphCraft Selection Test - Judge Panel</div>
+						</div>
+					</div>ml lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,32 +15,70 @@
 		<link rel="stylesheet" href="/css/style.css" />
 	</head>
 	<body>
-		<form id="scoringForm">
+		<div class="tech-header">
 			<div class="header-container">
-				<div class="timer-header">
-					<div class="test-status">
-						<span>Judging</span>
+				<div class="header-left">
+					<div class="logo-container">
+						<div class="logo"></div>
+						<div>
+							<h1 class="brand-title">Logique</h1>
+							<div class="contest-subtitle">Judge Panel</div>
+						</div>
 					</div>
-					<h1 class="heading">Submissions</h1>
 				</div>
-				<div class="final-submit-container">
+				<div class="header-right">
+					<div class="test-status">
+						<span class="status-indicator active"></span>
+						<span>Judging in Progress</span>
+					</div>
 					<button type="button" id="nextBtn" class="next-btn">
 						Next Submission
 					</button>
 				</div>
 			</div>
-			<span id="judgingArrayLength" style="display: none"
-				><%= judgingArrayLength %></span
-			>
+		</div>
 
-			<div class="problem-card">
+		<form id="scoringForm">
+			<span id="judgingArrayLength" style="display: none"><%= judgingArrayLength %></span>
+
+			<div class="judging-container">
+				<div class="judging-table">
+					<% judgingArray.forEach((judgingToken, index) => { %>
+					<div style="display: none" id="<%= `image-container-${index}` %>">
+						<table>
+							<thead>
+								<tr>
+									<th>Problem Statement</th>
+									<th>Team Submission</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td style="width: 50%; text-align: center; vertical-align: middle;">
+										<img
+											class="judging-image"
+											src="/<%= `problems-${currentRound}` %>/<%= judgingToken.question %>"
+											alt="Problem Statement"
+										/>
+									</td>
+									<td style="width: 50%; text-align: center; vertical-align: middle;">
+										<img
+											class="judging-image"
+											src="/<%= `judge-view-${currentRound}` %>/<%= judgingToken.teamName %>/<%= judgingToken.solution %>"
+											alt="Team Solution"
+										/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<% }); %>
+				</div>
+
 				<div class="controls">
+					<h3 style="margin-bottom: 20px; color: var(--primary-cyan);">Score Submission</h3>
 					<div class="inputs-box">
-						<div
-							id="val-alert"
-							class="val-alert"
-							style="display: none"
-						>
+						<div id="val-alert" class="val-alert" style="display: none">
 							Check entered values
 						</div>
 						<div class="input-hint">Enter Score</div>
@@ -41,8 +87,9 @@
 							type="number"
 							id="score"
 							name="score"
-							placeholder="Enter score"
+							placeholder="Enter score (0-100)"
 							min="0"
+							max="100"
 							required
 						/>
 						<div class="input-hint">Confirm Score</div>
@@ -52,45 +99,10 @@
 							name="confirmScore"
 							placeholder="Confirm score"
 							min="0"
+							max="100"
 							required
 						/>
 					</div>
-				</div>
-
-				<div class="judging-table">
-					<% judgingArray.forEach((judgingToken, index) => { %>
-					<div
-						style="display: none"
-						id="<%= `image-container-${index}` %>"
-					>
-						<table>
-							<thead>
-								<tr>
-									<th>Problem</th>
-									<th>Submission</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td style="width: 50%">
-										<img
-											class="clickable-image judging-image"
-											src="/<%= `problems-${currentRound}` %>/<%= judgingToken.question %>"
-											alt="Image 1"
-										/>
-									</td>
-									<td style="width: 50%">
-										<img
-											class="clickable-image judging-image"
-											src="/<%= `judge-view-${currentRound}` %>/<%= judgingToken.teamName %>/<%= judgingToken.solution %>"
-											alt="Image 2"
-										/>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<% }); %>
 				</div>
 			</div>
 		</form>
