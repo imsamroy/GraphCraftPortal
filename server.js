@@ -301,6 +301,7 @@ app.post("/start-test", (req, res) => {
     startTime: req.session.startTime,
     timeLimit: req.session.timeLimit,
   };
+  log(`Member ${req.session.memberRole} of team ${req.session.teamName} started round ${req.session.currentRound}`);
 
   return redirectToCurrentState(req, res);
 });

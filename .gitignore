@@ -1,4 +1,4 @@
-node_modules
+node_modules/
 credentials.json
 submissions-round-1/*
 submissions-round-2/*
