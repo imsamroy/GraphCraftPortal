@@ -7,27 +7,42 @@
 		<link rel="stylesheet" href="/css/style.css" />
 	</head>
 	<body>
-		<div class="start-container">
-			<div class="instruction-card"></div>
-			<div class="card-container">
-				<div class="card">
-					<h1 class="login-head">Administrator Login</h1>
+		<div class="page-wrapper">
+			<div class="login-container">
+				<!-- School Header -->
+				<div class="school-header">
+					<div class="logo-container">
+						<div class="logo-dpsaura"></div>
+						<div class="logo-techclub"></div>
+					</div>
+				</div>
 
-					<form id="redirectForm" method="POST" action="/admin-login">
-						<div class="input-container">
-							<div class="input-hint">Password</div>
-							<input
-								type="password"
-								id="passKey"
-								name="pass"
-								class="login-input password"
-								required
-							/>
-						</div>
-						<div class="btn-container">
-							<button type="submit">Login</button>
-						</div>
-					</form>
+				<!-- Main Content -->
+				<div class="main-content">
+					<div class="logique-branding">
+						<h1 class="logique-title">
+							L<div class="fest-logo-o"></div>GIQUE
+						</h1>
+						<p class="tagline">LEARN • LARK • LUMINATE</p>
+						<div class="event-name">GraphCraft</div>
+					</div>
+
+					<div class="login-form-container">
+						<h2 class="login-title">Administrator Login</h2>
+						<form id="redirectForm" method="POST" action="/admin-login">
+							<div class="form-group">
+								<label for="passKey">Password</label>
+								<input
+									type="password"
+									id="passKey"
+									name="pass"
+									required
+									placeholder="Enter administrator password"
+								/>
+							</div>
+							<button type="submit" class="login-button">Login</button>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>

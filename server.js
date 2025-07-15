@@ -201,44 +201,11 @@ app.post("/login", upload.none(), (req, res) => {
     TEAM_LIST.push(teamName);
   }
 
-  // Create team folder if not exists
+  // Create team folder if not exists (only for round 1 initially)
   makeFolderWithTeamName(req, teamName);
   req.session.teamName = teamName;
   req.session.memberRole = memberRole;
-
-  // Path for problem split
-  const splitPath = path.join(
-    req.session.teamSubmissionsDir,
-    "problem_split.json",
-  );
-
-  let split;
-  if (!fs.existsSync(splitPath)) {
-    // First member to log in: split and save
-    const problems_dir = PROBLEMS_DIR_1; // or round-2 if needed
-    const files = fs.readdirSync(problems_dir);
-    const pngFiles = files.filter((file) =>
-      file.toLowerCase().endsWith(".png"),
-    );
-    const shuffled = shuffleArray(pngFiles);
-    const half = Math.floor(shuffled.length / 2);
-    split = {
-      memberA: shuffled.slice(0, half),
-      memberB: shuffled.slice(half),
-    };
-    fs.writeFileSync(splitPath, JSON.stringify(split, null, 2));
-  } else {
-    // Already split, just load
-    split = JSON.parse(fs.readFileSync(splitPath));
-  }
-
-  req.session.assignedProblems =
-    split[memberRole === "A" ? "memberA" : "memberB"];
-  req.session.teamSubmissionsJSONDir = path.join(
-    req.session.teamSubmissionsDir,
-    "submissions.json",
-  );
-  req.session.currentRound = 1; // or set appropriately
+  req.session.currentRound = CURRENT_ROUND; // Set to the actual current round
 
   // REDIRECT TO START PAGE, NOT TEST!
   req.session.currentState = "/start";
@@ -281,12 +248,55 @@ function shuffleArray(array) {
 app.post("/start-test", (req, res) => {
   if (
     !req.session.teamName ||
-    !req.session.memberRole ||
-    !req.session.assignedProblems
+    !req.session.memberRole
   ) {
     req.session.currentState = "/login";
     return redirectToCurrentState(req, res);
   }
+
+  // Update current round to match the global current round
+  req.session.currentRound = CURRENT_ROUND;
+
+  // Handle problem splitting based on the current round
+  const submissions_dir = CURRENT_ROUND === 1 ? SUBMISSIONS_DIR_1 : SUBMISSIONS_DIR_2;
+  const teamSubmissionsDir = path.join(submissions_dir, req.session.teamName);
+  req.session.teamSubmissionsDir = teamSubmissionsDir;
+
+  // Ensure the team submissions directory exists for the current round
+  if (!fs.existsSync(teamSubmissionsDir)) {
+    fs.mkdirSync(teamSubmissionsDir, { recursive: true });
+  }
+
+  // Path for problem split
+  const splitPath = path.join(teamSubmissionsDir, "problem_split.json");
+
+  let split;
+  if (!fs.existsSync(splitPath)) {
+    // First member to log in: split and save
+    const problems_dir = CURRENT_ROUND === 1 ? PROBLEMS_DIR_1 : PROBLEMS_DIR_2;
+    const files = fs.readdirSync(problems_dir);
+    const pngFiles = files.filter((file) =>
+      file.toLowerCase().endsWith(".png"),
+    );
+    const shuffled = shuffleArray(pngFiles);
+    const half = Math.floor(shuffled.length / 2);
+    split = {
+      memberA: shuffled.slice(0, half),
+      memberB: shuffled.slice(half),
+    };
+    fs.writeFileSync(splitPath, JSON.stringify(split, null, 2));
+  } else {
+    // Already split, just load
+    split = JSON.parse(fs.readFileSync(splitPath));
+  }
+
+  req.session.assignedProblems =
+    split[req.session.memberRole === "A" ? "memberA" : "memberB"];
+  
+  req.session.teamSubmissionsJSONDir = path.join(
+    teamSubmissionsDir,
+    "submissions.json",
+  );
 
   // Initialize all session variables for the test
   req.session.testStarted = true;
@@ -357,7 +367,7 @@ app.get("/test", (req, res) => {
   res.render("test", {
     title: "GraphCraft Test",
     assignedProblems: req.session.assignedProblems,
-    problemDir: "problems-round-1", // or round-2 as needed
+    problemDir: req.session.currentRound === 1 ? "problems-round-1" : "problems-round-2",
     startTime: req.session.startTime || 0,
     duration: req.session.timeLimit || 0,
     totalCount: req.session.assignedProblems.length,
@@ -497,6 +507,7 @@ app.post("/next-round", (req, res) => {
     req.session.teamSubmissionsDir,
     "submissions.json",
   );
+  req.session.currentRound = CURRENT_ROUND; // Update to current round
 
   req.session.currentState = "/start";
 

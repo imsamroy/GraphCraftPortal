@@ -7,48 +7,49 @@
 		<link rel="stylesheet" href="/css/style.css" />
 	</head>
 	<body>
-		<div class="start-container">
-			<div class="instruction-card">
-				<div class="logo-container logo-centered">
-					<div class="logo">
-						<div class="tech-club-logo"></div>
-					</div>
-					<div>
-						<h1 class="brand-title">Logique</h1>
-						<div class="contest-subtitle">GraphCraft Selection Test</div>
+		<div class="page-wrapper">
+			<div class="login-container">
+				<!-- School Header -->
+				<div class="school-header">
+					<div class="logo-container">
+						<div class="logo-dpsaura"></div>
+						<div class="logo-techclub"></div>
 					</div>
 				</div>
-				<h1>Scoring Methods and Criteria:</h1>
-				<p>
-					You will be given a series of patterns to recreate on
-					Desmos:
-				</p>
-				<ol class="instructions">
-					<li>Download problem images by clicking on them</li>
-					<li>Create accurate solutions in Desmos</li>
-					<li>Upload your desmos file (.des format)</li>
-					<li>Click "Submit" to proceed</li>
-					<li>
-						After submitting your solutions to the desired problems,
-						click "Final Submit"
-					</li>
-				</ol>
-				<div class="test-info">
-					<h3>Round Transition</h3>
-					<p>Prepare for the next round. Wait for administrator instructions before proceeding.</p>
-				</div>
-			</div>
-			<div class="card-container">
-				<div class="card">
-					<h1 class="login-head">
-						Wait for Administrator's instruction
-					</h1>
 
-					<form id="redirectForm" method="POST" action="/next-round">
-						<div class="btn-container start-btn-container">
-							<button type="submit">Next Round</button>
+				<!-- Main Content -->
+				<div class="main-content">
+					<div class="logique-branding">
+						<h1 class="logique-title">
+							L<div class="fest-logo-o"></div>GIQUE
+						</h1>
+						<p class="tagline">LEARN • LARK • LUMINATE</p>
+						<div class="event-name">GraphCraft</div>
+						
+						<!-- Instructions integrated into branding area -->
+						<div class="instruction-card" style="margin-top: 40px; padding: 30px; max-width: 600px;">
+							<h2>Scoring Methods and Criteria:</h2>
+							<p>You will be given a series of patterns to recreate on Desmos:</p>
+							<ol class="instructions">
+								<li>Download problem images by clicking on them</li>
+								<li>Create accurate solutions in Desmos</li>
+								<li>Upload your desmos file (.des format)</li>
+								<li>Click "Submit" to proceed</li>
+								<li>After submitting your solutions to the desired problems, click "Final Submit"</li>
+							</ol>
+							<div class="test-info">
+								<h3>Round Transition</h3>
+								<p>Prepare for the next round. Wait for administrator instructions before proceeding.</p>
+							</div>
 						</div>
-					</form>
+					</div>
+
+					<div class="login-form-container">
+						<h2 class="login-title">Wait for Administrator's instruction</h2>
+						<form id="redirectForm" method="POST" action="/next-round">
+							<button type="submit" class="login-button">Next Round</button>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>

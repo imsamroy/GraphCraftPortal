@@ -1,13 +1,5 @@
-<!doctype h				<div class="header-left">
-					<div class="logo-container">
-						<div class="logo">
-							<div class="tech-club-logo"></div>
-						</div>
-						<div>
-							<h1 class="brand-title">Logique</h1>
-							<div class="contest-subtitle">GraphCraft Selection Test - Judge Panel</div>
-						</div>
-					</div>ml lang="en">
+<!doctype html>
+<html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,28 +7,38 @@
 		<link rel="stylesheet" href="/css/style.css" />
 	</head>
 	<body>
-		<div class="tech-header">
-			<div class="header-container">
-				<div class="header-left">
-					<div class="logo-container">
-						<div class="logo"></div>
-						<div>
-							<h1 class="brand-title">Logique</h1>
-							<div class="contest-subtitle">Judge Panel</div>
+		<div class="page-wrapper">
+			<div class="tech-header">
+				<div class="header-container">
+					<div class="header-left">
+						<div class="brand-section">
+							<div class="logo-container">
+								<div class="logo-dpsaura"></div>
+								<div class="logo-techclub"></div>
+								<div class="logo"></div>
+							</div>
+							<div class="brand-info">
+								<h1 class="brand-title">Logique</h1>
+								<div class="contest-subtitle">GraphCraft Judge Panel</div>
+							</div>
+						</div>
+						<div class="school-badge">
+							<div class="school-name">DPS Auraiya</div>
+							<div class="tech-club-name">Tech Club</div>
+						</div>
+					</div>
+					<div class="header-right">
+						<div class="test-status">
+							<div class="status-indicator active"></div>
+							<span>Judging <%= currentRound %></span>
+							<div class="vl"></div>
+							<button type="button" id="nextBtn" class="next-btn">
+								Next Submission
+							</button>
 						</div>
 					</div>
 				</div>
-				<div class="header-right">
-					<div class="test-status">
-						<span class="status-indicator active"></span>
-						<span>Judging in Progress</span>
-					</div>
-					<button type="button" id="nextBtn" class="next-btn">
-						Next Submission
-					</button>
-				</div>
 			</div>
-		</div>
 
 		<form id="scoringForm">
 			<span id="judgingArrayLength" style="display: none"><%= judgingArrayLength %></span>
@@ -110,6 +112,8 @@
 		<form id="resultsForm" method="post" action="/submit-final-scores">
 			<input type="hidden" name="results" id="resultsInput" />
 		</form>
+
+		</div> <!-- Close page-wrapper -->
 
 		<script src="/js/judging.js"></script>
 	</body>

@@ -7,71 +7,65 @@
         <link rel="stylesheet" href="/css/style.css" />
     </head>
     <body>
-        <div class="start-container">
-            <div class="instruction-card">
-                <div class="logo-container" style="justify-content: center; margin-bottom: 30px;">
-                    <div class="logo">
-                        <div class="tech-club-logo"></div>
-                    </div>
-                    <div>
-                        <h1 class="brand-title">Logique</h1>
-                        <div class="contest-subtitle">GraphCraft Selection Test</div>
+        <div class="page-wrapper">
+            <div class="login-container">
+                <!-- School Header -->
+                <div class="school-header">
+                    <div class="logo-container">
+                        <div class="logo-dpsaura"></div>
+                        <div class="logo-techclub"></div>
                     </div>
                 </div>
-                <h2>Welcome to Logique Tech Fest</h2>
-                <p>Organized by our Tech Club for the school, this competition tests your mathematical graphing skills using Desmos.</p>
-                <div class="test-info">
-                    <h3>Login Instructions</h3>
-                    <p>Enter your team credentials and select your member role to begin.</p>
-                </div>
-            </div>
-            <div class="card-container">
-                <div class="card">
-                    <h1 class="login-head">Team Member Login</h1>
-                    <form id="redirectForm" method="POST" action="/login">
-                        <div class="input-container">
-                            <div class="input-hint">Team Name</div>
-                            <input
-                                type="text"
-                                id="teamName"
-                                name="name"
-                                class="login-input"
-                                required
-                                placeholder="Enter your team name"
-                            />
-                            <div class="input-hint">Password</div>
-                            <input
-                                type="password"
-                                id="teamPass"
-                                name="password"
-                                class="login-input"
-                                required
-                                placeholder="Enter your password"
-                            />
-                            <div class="input-hint">I am:</div>
-                            <label>
+
+                <!-- Main Content -->
+                <div class="main-content">
+                    <div class="logique-branding">
+                        <h1 class="logique-title">
+                            L<div class="fest-logo-o"></div>GIQUE
+                        </h1>
+                        <p class="tagline">LEARN • LARK • LUMINATE</p>
+                        <div class="event-name">GraphCraft</div>
+                    </div>
+
+                    <div class="login-form-container">
+                        <h2 class="login-title">Team Member Login</h2>
+                        <form id="redirectForm" method="POST" action="/login">
+                            <div class="form-group">
+                                <label for="teamName">Team Name</label>
                                 <input
-                                    type="radio"
-                                    name="memberRole"
-                                    value="A"
+                                    type="text"
+                                    id="teamName"
+                                    name="name"
                                     required
+                                    placeholder="Enter your team name"
                                 />
-                                Member A
-                            </label>
-                            <label>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
                                 <input
-                                    type="radio"
-                                    name="memberRole"
-                                    value="B"
+                                    type="password"
+                                    id="password"
+                                    name="password"
                                     required
+                                    placeholder="Enter your password"
                                 />
-                                Member B
-                            </label>
-                        </div>
-                        <div class="btn-container">
-                            <button type="submit">Login</button>
-                        </div>
-                    </form>
+                            </div>
+                            <div class="form-group">
+                                <label>Member Role</label>
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="memberRole" value="A" required />
+                                        <span>Member A</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="memberRole" value="B" required />
+                                        <span>Member B</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="login-button">Login</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
