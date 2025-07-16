@@ -692,6 +692,90 @@ button:disabled {
     position: relative;
 }
 
+/* Test page specific styling */
+.test-content {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.test-subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-secondary) !important;
+    margin-bottom: 40px;
+    font-weight: 500;
+}
+
+.problem-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.problem-card {
+    background: linear-gradient(135deg, 
+        rgba(17, 17, 17, 0.95) 0%, 
+        rgba(139, 92, 246, 0.12) 25%, 
+        rgba(0, 212, 255, 0.08) 75%, 
+        rgba(17, 17, 17, 0.95) 100%);
+    backdrop-filter: blur(25px);
+    border: 2px solid;
+    border-image: linear-gradient(135deg, 
+        var(--primary-cyan), 
+        var(--primary-purple), 
+        var(--warning)) 1;
+    border-radius: 25px;
+    padding: 30px;
+    box-shadow: 
+        0 15px 45px rgba(0, 0, 0, 0.4),
+        0 0 80px rgba(0, 212, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.problem-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple), var(--warning));
+}
+
+.problem-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("assets/background.webp") center/cover;
+    opacity: 0.02;
+    z-index: -1;
+}
+
+.problem-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.5),
+        0 0 120px rgba(0, 212, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    border-image: linear-gradient(135deg, 
+        var(--warning), 
+        var(--primary-cyan), 
+        var(--primary-purple)) 1;
+}
+
+.problem-image-container {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
 .image-card {
     background: linear-gradient(135deg, 
         rgba(17, 17, 17, 0.95) 0%, 
@@ -751,7 +835,7 @@ button:disabled {
 
 .clickable-image {
     width: 100%;
-    max-height: 200px;
+    max-height: 300px;
     object-fit: contain;
     border-radius: 12px;
     transition: all 0.3s ease;
@@ -772,6 +856,18 @@ button:disabled {
     font-size: 1.1rem;
 }
 
+.btn-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.btn-container-int {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
 .file-upload-container {
     width: 100%;
     margin: 20px 0;
@@ -789,7 +885,7 @@ button:disabled {
     color: var(--text-secondary);
     text-align: center;
     word-break: break-all;
-    padding: 8px;
+    padding: 10px;
     background: rgba(0, 212, 255, 0.05);
     border: 1px solid rgba(0, 212, 255, 0.2);
     border-radius: 8px;
@@ -797,15 +893,36 @@ button:disabled {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 500;
+}
+
+.upload-btn {
+    background: linear-gradient(135deg, var(--primary-purple) 0%, #6366f1 100%);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    padding: 12px 24px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.upload-btn:hover {
+    box-shadow: 0 6px 25px rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
 }
 
 .submit-btn {
     margin-top: 15px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--primary-cyan) 0%, var(--secondary-blue) 100%);
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .final-submit-container {
     text-align: center;
-    padding: 40px;
+    padding: 30px 40px 60px;
+    margin-top: 20px;
 }
 
 .server-status {
@@ -1657,6 +1774,37 @@ button {
     box-shadow: 0 2px 10px rgba(0, 212, 255, 0.3);
 }
 
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.fade-out {
+    animation: fadeOut 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
 /* Responsive Design for Login */
 @media (max-width: 1200px) {
     .main-content {
@@ -1764,5 +1912,116 @@ button {
     .login-form-container {
         padding: 25px 20px;
         min-width: auto;
+    }
+}
+
+/* Responsive design for test page */
+@media (max-width: 1024px) {
+    .problem-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .problem-card {
+        padding: 25px;
+    }
+    
+    .test-content {
+        padding: 30px 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .header-left {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .brand-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .brand-title {
+        font-size: 1.8rem;
+    }
+    
+    .problem-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .problem-card {
+        padding: 20px;
+        margin: 0 10px;
+    }
+    
+    .clickable-image {
+        max-height: 250px;
+    }
+    
+    .test-content {
+        padding: 20px 15px;
+    }
+    
+    .final-submit-container {
+        padding: 20px 15px 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo, .logo-techclub, .logo-dpsaura {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .brand-title {
+        font-size: 1.5rem;
+    }
+    
+    .contest-subtitle {
+        font-size: 0.85rem;
+    }
+    
+    .test-status {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 0.85rem;
+        padding: 10px 15px;
+    }
+    
+    .timer-container {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+    
+    .problem-card {
+        padding: 15px;
+        border-radius: 20px;
+    }
+    
+    .clickable-image {
+        max-height: 200px;
+    }
+    
+    .image-name {
+        font-size: 1rem;
+    }
+    
+    .test-subtitle {
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+    
+    .final-submit-btn {
+        font-size: 16px;
+        padding: 12px 25px;
     }
 }

@@ -41,32 +41,24 @@
             </div>
 
             <!-- Hidden data elements -->
-            <div id="startTime" data-remaining="<%= startTime %>" style="display: none"></div>
-            <div id="duration" data-remaining="<%= duration %>" style="display: none"></div>
+            <div id="startTime" data-start="<%= startTime %>" style="display: none"></div>
+            <div id="duration" data-duration="<%= duration %>" style="display: none"></div>
             <span id="problemDir" style="display: none"><%= problemDir %></span>
 
-            <div class="final-submit-container">
-                <button id="finalSubmitBtn" class="final-submit-btn">
-                    Final Submit
-                </button>
+            <% if (totalCount === 0) { %>
+            <div class="completion-container">
+                <p class="no-images">
+                    No PNG images found in the problems directory.
+                </p>
             </div>
-
-            <div class="image-container">
-                </button>
-            </div>
-        </div>
-
-        <% if (totalCount === 0) { %>
-        <div class="completion-container">
-            <p class="no-images">
-                No PNG images found in the problems directory.
-            </p>
-        </div>
-        <% } else { %>
-        <div class="problem-container" id="imageContainer">
+            <% } else { %>
+            <div class="test-content">
+                <p class="test-subtitle">Submitting one problem will reveal more!</p>
+                
+                <div class="problem-container" id="imageContainer">
             <% assignedProblems.forEach(function(file) { %>
             <div class="problem-card" data-filename="<%= file %>">
-                <div class="image-container">
+                <div class="problem-image-container">
                     <a
                         href="/download/<%= encodeURIComponent(file) %>"
                         download
@@ -109,8 +101,16 @@
                 </div>
             </div>
             <% }); %>
-        </div>
-        <% } %>
+                </div>
+                
+                <!-- Final Submit Button at the bottom -->
+                <div class="final-submit-container">
+                    <button id="finalSubmitBtn" class="final-submit-btn">
+                        Final Submit
+                    </button>
+                </div>
+            </div>
+            <% } %>
 
         <!-- Confirmation Modal -->
         <div id="confirmationModal" class="modal">

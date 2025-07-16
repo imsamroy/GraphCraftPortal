@@ -267,6 +267,15 @@ app.post("/start-test", (req, res) => {
     fs.mkdirSync(teamSubmissionsDir, { recursive: true });
   }
 
+  // Setup judging directory as well
+  const judge_view_dir = CURRENT_ROUND === 1 ? JUDGE_VIEW_DIR_1 : JUDGE_VIEW_DIR_2;
+  const teamJudgingDir = path.join(judge_view_dir, req.session.teamName);
+  req.session.teamJudgingDir = teamJudgingDir;
+
+  if (!fs.existsSync(teamJudgingDir)) {
+    fs.mkdirSync(teamJudgingDir, { recursive: true });
+  }
+
   // Path for problem split
   const splitPath = path.join(teamSubmissionsDir, "problem_split.json");
 
@@ -278,6 +287,14 @@ app.post("/start-test", (req, res) => {
     const pngFiles = files.filter((file) =>
       file.toLowerCase().endsWith(".png"),
     );
+    
+    console.log(`Found ${pngFiles.length} PNG files for round ${CURRENT_ROUND}:`, pngFiles);
+    
+    if (pngFiles.length === 0) {
+      console.error(`No PNG files found in ${problems_dir}`);
+      return res.status(500).send("No problems found for this round");
+    }
+    
     const shuffled = shuffleArray(pngFiles);
     const half = Math.floor(shuffled.length / 2);
     split = {
@@ -285,9 +302,11 @@ app.post("/start-test", (req, res) => {
       memberB: shuffled.slice(half),
     };
     fs.writeFileSync(splitPath, JSON.stringify(split, null, 2));
+    console.log(`Created problem split for team ${req.session.teamName}:`, split);
   } else {
     // Already split, just load
     split = JSON.parse(fs.readFileSync(splitPath));
+    console.log(`Loaded existing problem split for team ${req.session.teamName}:`, split);
   }
 
   req.session.assignedProblems =
@@ -297,6 +316,12 @@ app.post("/start-test", (req, res) => {
     teamSubmissionsDir,
     "submissions.json",
   );
+
+  // Create submissions.json if it doesn't exist
+  if (!fs.existsSync(req.session.teamSubmissionsJSONDir)) {
+    fs.writeFileSync(req.session.teamSubmissionsJSONDir, JSON.stringify([], null, 2));
+    console.log(`Created submissions.json for team ${req.session.teamName} for round ${CURRENT_ROUND}`);
+  }
 
   // Initialize all session variables for the test
   req.session.testStarted = true;
@@ -364,13 +389,19 @@ app.get("/test", (req, res) => {
   ) {
     return res.redirect("/login");
   }
+  
+  // Add some logging to debug
+  console.log("Team:", req.session.teamName, "Role:", req.session.memberRole);
+  console.log("Assigned problems:", req.session.assignedProblems);
+  console.log("Problem dir:", req.session.currentRound === 1 ? "problems-round-1" : "problems-round-2");
+  
   res.render("test", {
     title: "GraphCraft Test",
-    assignedProblems: req.session.assignedProblems,
+    assignedProblems: req.session.assignedProblems || [],
     problemDir: req.session.currentRound === 1 ? "problems-round-1" : "problems-round-2",
-    startTime: req.session.startTime || 0,
-    duration: req.session.timeLimit || 0,
-    totalCount: req.session.assignedProblems.length,
+    startTime: req.session.startTime || Date.now(),
+    duration: req.session.timeLimit || (45 * 60 * 1000),
+    totalCount: (req.session.assignedProblems || []).length,
     memberRole: req.session.memberRole,
     teamName: req.session.teamName,
   });
@@ -656,6 +687,14 @@ app.get("/api/team-timers", (req, res) => {
   );
 
   res.json(timers);
+});
+
+// Add missing test-status endpoint
+app.get("/test-status", (req, res) => {
+  res.json({ 
+    started: CURRENT_ROUND > 0 && FREEZE_LOGIN,
+    currentRound: CURRENT_ROUND 
+  });
 });
 
 app.post("/invigilation-end-test", (req, res) => {

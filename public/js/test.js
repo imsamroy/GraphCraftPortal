@@ -42,9 +42,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 	const startTimeElement = document.getElementById("startTime");
 	const durationElement = document.getElementById("duration");
-	const startTime = parseInt(startTimeElement.dataset.remaining);
-	const duration = parseInt(durationElement.dataset.remaining);
-	if (startTime > 0) {
+	const startTime = parseInt(startTimeElement.dataset.start);
+	const duration = parseInt(durationElement.dataset.duration);
+	if (startTime > 0 && duration > 0) {
 		startTimer(startTime, duration);
 	}
 });
@@ -140,7 +140,7 @@ function addNewImageCard(imageFilename) {
 	card.setAttribute("data-filename", imageFilename);
 
 	const imageContainerDiv = document.createElement("div");
-	imageContainerDiv.className = "image-container";
+	imageContainerDiv.className = "problem-image-container";
 
 	const ahref = document.createElement("a");
 	ahref.href = `/downloads/${encodeURIComponent(imageFilename)}`;
@@ -233,9 +233,9 @@ function startTimer(startTime, duration) {
 
 	function updateTimer() {
 		const elapsed = Date.now() - startTime;
-		const remaining = Math.floor((duration - elapsed) / 1000);
-		const minutes = Math.max(Math.floor(remaining / 60), 0);
-		const seconds = Math.max(remaining % 60, 0);
+		const remaining = Math.max(0, Math.floor((duration - elapsed) / 1000));
+		const minutes = Math.floor(remaining / 60);
+		const seconds = remaining % 60;
 
 		timerElement.textContent = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 
@@ -248,5 +248,5 @@ function startTimer(startTime, duration) {
 	updateTimer();
 
 	// Update every second
-	timerInterval = setInterval(updateTimer, 500);
+	timerInterval = setInterval(updateTimer, 1000);
 }
